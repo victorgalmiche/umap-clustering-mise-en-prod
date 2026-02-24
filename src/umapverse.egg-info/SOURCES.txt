@@ -1,6 +1,7 @@
 LICENSE
 README.md
 pyproject.toml
+src/umapverse/__init__.py
 src/umapverse.egg-info/PKG-INFO
 src/umapverse.egg-info/SOURCES.txt
 src/umapverse.egg-info/dependency_links.txt
@@ -15,3 +16,4 @@ src/umapverse/umap_comparisons/dowstream_clustering.py
 src/umapverse/umap_comparisons/intrinsic_measures.py
 src/umapverse/umap_comparisons/test_custom_umap_forest.py
 src/umapverse/umap_comparisons/visuals.py
+tests/test_knn.py
