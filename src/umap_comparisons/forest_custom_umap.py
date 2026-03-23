@@ -4,13 +4,13 @@ import sys
 import os
 import time
 
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, project_root)
-
 from sklearn.datasets import fetch_covtype
 from sklearn.preprocessing import StandardScaler
-from umap_algo.umap_class import umap_mapping
+from src.umap_algo.umap_class import umap_mapping
 import umap  # UMAP library for comparison
+
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
 
 print("=" * 70)
 print("TESTING CUSTOM UMAP ON FOREST COVER DATASET")
