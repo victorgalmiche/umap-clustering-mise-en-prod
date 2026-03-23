@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.umap_algo.knn import exact_knn_all_points
+from umap_algo.knn import exact_knn_all_points
 
 
 def test_positive_knn_distances():

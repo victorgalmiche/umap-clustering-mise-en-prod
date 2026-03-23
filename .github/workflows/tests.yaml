@@ -23,15 +23,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install uv
           
-
       - name: Install dev dependencies
         run: |
           uv sync
       
-      - name: Code quality
+      - name: ruff formatting
         run : |
           uv run ruff format src/
-          uv run --with pylint pylint src
+      - name: Commit and push formatted code
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/
+          git diff --cached --quiet || git commit -m "Apply code formatting via CI"
+          git push
+
+      - name: pylint report
+        run: uv run --with pylint pylint src
 
       - name: Run tests
-        run: uv pytest tests/
+        run: PYTHONPATH=src uv run pytest tests/ 
