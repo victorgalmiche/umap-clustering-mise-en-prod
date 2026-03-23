@@ -1,6 +1,4 @@
-import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.datasets import fetch_openml
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE

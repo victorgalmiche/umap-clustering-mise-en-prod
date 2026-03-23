@@ -14,7 +14,7 @@ print("="*70)
 print("Fetching Mini-BooNE dataset (Physics)...")
 
 miniboone = fetch_openml(data_id=41150, as_frame=False, parser='auto')
-print(f"Loaded Mini-BooNE dataset (ID: 41150)")
+print("Loaded Mini-BooNE dataset (ID: 41150)")
 
 X = miniboone.data
 y = miniboone.target
@@ -151,7 +151,7 @@ for method in ['PCA', 't-SNE', 'UMAP']:
         })
 
 df_size = pd.DataFrame(size_data)
-csv_size = f"src/umap_comparisons/images/computational_cost_sample_size.csv"
+csv_size = "src/umap_comparisons/images/computational_cost_sample_size.csv"
 df_size.to_csv(csv_size, index=False)
 print(f"Sample size scaling results saved to: {csv_size}")
 
@@ -166,7 +166,7 @@ for method in ['PCA', 't-SNE', 'UMAP']:
         })
 
 df_dim = pd.DataFrame(dim_data)
-csv_dim = f"src/umap_comparisons/images/computational_cost_dimension.csv"
+csv_dim = "src/umap_comparisons/images/computational_cost_dimension.csv"
 df_dim.to_csv(csv_dim, index=False)
 print(f"Dimension scaling results saved to: {csv_dim}")
 

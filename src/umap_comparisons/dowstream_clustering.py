@@ -141,7 +141,7 @@ if best_eps is not None:
 
 df_eps_tuning = pd.DataFrame(eps_summary)
 df_eps_tuning.to_csv("src/umap_comparisons/images/dbscan_eps_tuning.csv", index=False)
-print(f"\nEPS tuning results saved to: images/dbscan_eps_tuning.csv")
+print("\nEPS tuning results saved to: images/dbscan_eps_tuning.csv")
 
 # ============================================================================
 # PHASE 3: EVALUATION (Run clustering with best eps and K-Means)
@@ -221,7 +221,7 @@ with open(txt_filename, 'w') as f:
     f.write("="*80 + "\n")
     f.write("DOWNSTREAM CLUSTERING EVALUATION RESULTS\n")
     f.write("="*80 + "\n\n")
-    f.write(f"Dataset: Fashion-MNIST\n")
+    f.write("Dataset: Fashion-MNIST\n")
     f.write(f"Number of points: {n_points}\n")
     f.write(f"Dimensions tested: {dimensions}\n")
     f.write(f"K-Means clusters: {n_clusters_kmeans}\n")

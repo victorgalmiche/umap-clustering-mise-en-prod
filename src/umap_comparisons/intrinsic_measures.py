@@ -149,7 +149,7 @@ with open(txt_filename, 'w') as f:
     f.write("="*70 + "\n\n")
     f.write(df_results.to_string(index=False))
     f.write("\n\n" + "="*70 + "\n")
-    f.write(f"Dataset: Fashion-MNIST\n")
+    f.write("Dataset: Fashion-MNIST\n")
     f.write(f"Number of points used: {n_points}\n")
     f.write("="*70 + "\n")
 print(f"Formatted table saved to: {txt_filename}")
