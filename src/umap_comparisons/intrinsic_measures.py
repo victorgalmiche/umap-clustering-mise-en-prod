@@ -11,37 +11,43 @@ import umap
 
 def compute_continuity(X, X_embedded, n_neighbors=5):
     """
-    Calculates continuity: 
+    Calculates continuity:
     Checks if neighbors in high-dim space are preserved in low-dim space.
     (Inverse logic of trustworthiness).
     """
     from sklearn.neighbors import NearestNeighbors
+
     n_samples = X.shape[0]
-    
+
     # NN
     nn_high = NearestNeighbors(n_neighbors=n_neighbors).fit(X)
     high_ind = nn_high.kneighbors(X, return_distance=False)
     nn_low = NearestNeighbors(n_neighbors=n_neighbors).fit(X_embedded)
     low_ind = nn_low.kneighbors(X_embedded, return_distance=False)
 
-    # Calculate rank overlap 
+    # Calculate rank overlap
     # Score of 1.0 means perfect preservation of neighborhoods
     overlap = 0
     for i in range(n_samples):
         intersection = np.intersect1d(high_ind[i], low_ind[i])
         overlap += len(intersection)
-    
+
     return overlap / (n_samples * n_neighbors)
 
+
 print("Loading Data...")
-fashion = fetch_openml(name='Fashion-MNIST', version=1, parser='auto')
+fashion = fetch_openml(name="Fashion-MNIST", version=1, parser="auto")
 n_points = 10000  # Number of points used
-X = fashion.data.iloc[:n_points].values  # Smaller subset for expensive distance matrix calcs
+X = fashion.data.iloc[
+    :n_points
+].values  # Smaller subset for expensive distance matrix calcs
 
 algorithms = {
     "PCA": PCA(n_components=2),
-    "t-SNE": TSNE(n_components=2, perplexity=30, init='pca', learning_rate='auto', random_state=42),
-    "UMAP": umap.UMAP(n_neighbors=15, min_dist=0.1, random_state=42)
+    "t-SNE": TSNE(
+        n_components=2, perplexity=30, init="pca", learning_rate="auto", random_state=42
+    ),
+    "UMAP": umap.UMAP(n_neighbors=15, min_dist=0.1, random_state=42),
 }
 
 # Store results for all methods
@@ -49,36 +55,36 @@ results = {}
 
 # Compute embeddings and metrics for each method
 for name, algo in algorithms.items():
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"Processing {name}...")
-    print('='*50)
-    
+    print("=" * 50)
+
     print(f"Running {name}...")
     X_emb = algo.fit_transform(X)
-    
+
     print("Computing Trustworthiness...")
     trust = trustworthiness(X, X_emb, n_neighbors=5)
-    
+
     print("Computing Continuity...")
     cont = compute_continuity(X, X_emb, n_neighbors=5)
-    
+
     print("-" * 30)
     print(f"Trustworthiness: {trust:.4f} (Avoids false neighbors)")
     print(f"Continuity:      {cont:.4f}  (Keeps neighbors together)")
     print("-" * 30)
-    
+
     # Store results (Spearman Rho will be computed and added later)
     results[name] = {
-        'embedding': X_emb,
-        'trustworthiness': trust,
-        'continuity': cont,
-        'spearman_rho': None  # Will be computed during Shephard diagram generation
+        "embedding": X_emb,
+        "trustworthiness": trust,
+        "continuity": cont,
+        "spearman_rho": None,  # Will be computed during Shephard diagram generation
     }
 
 # Generate Shephard Diagrams for each method
-print("\n" + "="*50)
+print("\n" + "=" * 50)
 print("Generating Shephard Diagrams...")
-print("="*50)
+print("=" * 50)
 
 # Randomly sample pairs to avoid memory explosion (O(N^2))
 n_pairs = 5000
@@ -89,25 +95,25 @@ X_sub = X[indices]
 fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 
 for idx, (name, result) in enumerate(results.items()):
-    X_emb_sub = result['embedding'][indices]
-    
+    X_emb_sub = result["embedding"][indices]
+
     # Pairwise distances
     dist_high = pairwise_distances(X_sub)
     dist_low = pairwise_distances(X_emb_sub)
-    
+
     # Upper triangle
     high_vals = dist_high[np.triu_indices_from(dist_high, k=1)]
     low_vals = dist_low[np.triu_indices_from(dist_low, k=1)]
-    
+
     # Compute Spearman correlation
     spearman_rho = spearmanr(high_vals, low_vals).correlation
-    
+
     # Store Spearman Rho in results
-    results[name]['spearman_rho'] = spearman_rho
-    
+    results[name]["spearman_rho"] = spearman_rho
+
     # Subsample points for plot
     mask = np.random.choice(len(high_vals), n_pairs, replace=False)
-    
+
     ax = axes[idx]
     ax.scatter(high_vals[mask], low_vals[mask], alpha=0.3, s=5)
     ax.set_xlabel("Distance in High-Dim (Original)")
@@ -120,36 +126,38 @@ plt.savefig("src/umap_comparisons/images/shephard_diagram.png")
 plt.show()
 
 # Create and save summary table
-print("\n" + "="*50)
+print("\n" + "=" * 50)
 print("SUMMARY OF INTRINSIC MEASURES")
-print("="*50)
+print("=" * 50)
 
 # Create DataFrame with results
 table_data = []
 for name, result in results.items():
-    table_data.append({
-        'Method': name,
-        'Number of Points': n_points,
-        'Trustworthiness': result['trustworthiness'],
-        'Continuity': result['continuity'],
-        'Spearman Rho': result['spearman_rho']
-    })
+    table_data.append(
+        {
+            "Method": name,
+            "Number of Points": n_points,
+            "Trustworthiness": result["trustworthiness"],
+            "Continuity": result["continuity"],
+            "Spearman Rho": result["spearman_rho"],
+        }
+    )
 
 df_results = pd.DataFrame(table_data)
 
 # Print formatted table
 print(df_results.to_string(index=False))
-print("="*50)
+print("=" * 50)
 
 # Also save as a nicely formatted text file
 txt_filename = f"src/umap_comparisons/images/intrinsic_measures_results_{n_points}.txt"
-with open(txt_filename, 'w') as f:
-    f.write("="*70 + "\n")
+with open(txt_filename, "w") as f:
+    f.write("=" * 70 + "\n")
     f.write("SUMMARY OF INTRINSIC MEASURES\n")
-    f.write("="*70 + "\n\n")
+    f.write("=" * 70 + "\n\n")
     f.write(df_results.to_string(index=False))
-    f.write("\n\n" + "="*70 + "\n")
+    f.write("\n\n" + "=" * 70 + "\n")
     f.write(f"Dataset: Fashion-MNIST\n")
     f.write(f"Number of points used: {n_points}\n")
-    f.write("="*70 + "\n")
+    f.write("=" * 70 + "\n")
 print(f"Formatted table saved to: {txt_filename}")

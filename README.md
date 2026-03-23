@@ -1,3 +1,5 @@
+[![PR Tests](https://github.com/victorgalmiche/umap-clustering-mise-en-prod/actions/workflows/tests.yaml/badge.svg)](https://github.com/victorgalmiche/umap-clustering-mise-en-prod/actions/workflows/tests.yaml)
+
 # UMAP-clustering
 
 UMAP-Clustering is a project that applies Uniform Manifold Approximation and Projection (UMAP) — a modern non-linear dimensionality reduction algorithm — to real-world datasets and combines it with clustering techniques to uncover structure in high-dimensional data.

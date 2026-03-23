@@ -1,8 +1,11 @@
 import numpy as np
 from sklearn.neighbors import KDTree
+from typing import Tuple
 
 
-def exact_knn_all_points(X, k, metric="euclidean"):
+def exact_knn_all_points(
+    X: np.ndarray, k: int, metric: str = "euclidean"
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Compute the k nearest neighbors for all points in dataset X using KDTree.
 
