@@ -5,8 +5,14 @@ similarity measures. In Proceedings of the 20th international conference on Worl
 import numpy as np
 import heapq 
 from scipy.spatial.distance import pdist, squareform
+from typing import List, Tuple
 
-def approx_knn_all_points(X, k, metric="euclidean"):
+
+def approx_knn_all_points(
+    X: np.ndarray,
+    k: int,
+    metric: str = "euclidean"
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Calcule les k plus proches voisins approximés pour tous les points du dataset en utilisant NNDescent.
 
@@ -33,8 +39,12 @@ def approx_knn_all_points(X, k, metric="euclidean"):
     return NNDescent(X, sigma, k)
 
 
-
-def NNDescent(V, sigma, K, max_iter=1000):
+def NNDescent(
+    V: np.ndarray,
+    sigma: np.ndarray,
+    K: int,
+    max_iter: int = 1000
+) -> Tuple[np.ndarray, np.ndarray]:
     """Algorithme 1 de l'article
     Inputs:
         V: ndarray (N, d), the dataset
@@ -50,7 +60,6 @@ def NNDescent(V, sigma, K, max_iter=1000):
         samples = np.random.choice([u for u in range(N) if u != v], K, replace=False)
         for u in samples:
             heapq.heappush(B[v], (-np.inf, u))
-
         
     for _ in range(max_iter):
         R = reverse(B)
@@ -67,7 +76,7 @@ def NNDescent(V, sigma, K, max_iter=1000):
             for _, u1 in B_bar[v]:
                 for _, u2 in B_bar[u1]:
                     if u2 == v:
-                        continue # Ne pas ajouter v à la liste de ses voisins
+                        continue  # Ne pas ajouter v à la liste de ses voisins
                     l = sigma[v, u2]
                     c += update_nn(B[v], (l, u2))
 
@@ -75,7 +84,6 @@ def NNDescent(V, sigma, K, max_iter=1000):
             break
     
     graph = [sorted([(u, -l) for l, u in heap ], key=lambda x: x[1]) for heap in B]
-
 
     indices = [[] for _ in range(N)]
     distances = [[] for _ in range(N)]
@@ -87,7 +95,7 @@ def NNDescent(V, sigma, K, max_iter=1000):
     return np.array(indices), np.array(distances)
 
 
-def reverse(B):
+def reverse(B: List[List[Tuple[float, int]]]) -> List[List[Tuple[float, int]]]:
     N = len(B)
     R = [[] for _ in range(N)]
     for u in range(N):
@@ -95,7 +103,8 @@ def reverse(B):
             R[v].append((l, u))
     return R
 
-def update_nn(H, x):
+
+def update_nn(H: List[Tuple[float, int]], x: Tuple[float, int]) -> int:
     l, u = x
 
     # Si u est déjà dans le tas

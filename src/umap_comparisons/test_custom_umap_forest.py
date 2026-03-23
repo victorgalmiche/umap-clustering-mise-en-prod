@@ -9,7 +9,7 @@ sys.path.insert(0, project_root)
 
 from sklearn.datasets import fetch_covtype
 from sklearn.preprocessing import StandardScaler
-from src.umapverse.umap_algo.umap_class import umap_mapping
+from umap_algo.umap_class import umap_mapping
 import umap  # UMAP library for comparison
 
 print("="*70)
