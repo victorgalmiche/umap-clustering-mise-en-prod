@@ -24,7 +24,7 @@ jobs:
           pip install uv
 
       - name: Install dev dependencies
-        run: uv install --dev
+        run: uv pip install --group dev
       
       - name: Code quality
         run : |
