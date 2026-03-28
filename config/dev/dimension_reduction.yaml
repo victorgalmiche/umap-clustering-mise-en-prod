@@ -1,9 +1,0 @@
-
-hyperparameters: 
-  n_neighbors: 15
-  min_dist: 0.1
-  n_components: 2
-  KNN_metric: "euclidean"
-  KNN_method: "exact"
-
-path_dataset: ""
