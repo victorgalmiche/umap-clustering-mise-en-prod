@@ -38,15 +38,11 @@ def compute_continuity(X, X_embedded, n_neighbors=5):
 print("Loading Data...")
 fashion = fetch_openml(name="Fashion-MNIST", version=1, parser="auto")
 n_points = 10000  # Number of points used
-X = fashion.data.iloc[
-    :n_points
-].values  # Smaller subset for expensive distance matrix calcs
+X = fashion.data.iloc[:n_points].values  # Smaller subset for expensive distance matrix calcs
 
 algorithms = {
     "PCA": PCA(n_components=2),
-    "t-SNE": TSNE(
-        n_components=2, perplexity=30, init="pca", learning_rate="auto", random_state=42
-    ),
+    "t-SNE": TSNE(n_components=2, perplexity=30, init="pca", learning_rate="auto", random_state=42),
     "UMAP": umap.UMAP(n_neighbors=15, min_dist=0.1, random_state=42),
 }
 

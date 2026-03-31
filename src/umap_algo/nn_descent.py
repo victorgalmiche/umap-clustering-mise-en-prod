@@ -8,9 +8,7 @@ from scipy.spatial.distance import pdist, squareform
 from typing import List, Tuple
 
 
-def approx_knn_all_points(
-    X: np.ndarray, k: int, metric: str = "euclidean"
-) -> Tuple[np.ndarray, np.ndarray]:
+def approx_knn_all_points(X: np.ndarray, k: int, metric: str = "euclidean") -> Tuple[np.ndarray, np.ndarray]:
     """
     Calcule les k plus proches voisins approximés pour tous les points du dataset en utilisant NNDescent.
 
@@ -37,9 +35,7 @@ def approx_knn_all_points(
     return NNDescent(X, sigma, k)
 
 
-def NNDescent(
-    V: np.ndarray, sigma: np.ndarray, K: int, max_iter: int = 1000
-) -> Tuple[np.ndarray, np.ndarray]:
+def NNDescent(V: np.ndarray, sigma: np.ndarray, K: int, max_iter: int = 1000) -> Tuple[np.ndarray, np.ndarray]:
     """Algorithme 1 de l'article
     Inputs:
         V: ndarray (N, d), the dataset

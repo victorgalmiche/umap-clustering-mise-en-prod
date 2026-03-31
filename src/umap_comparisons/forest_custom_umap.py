@@ -72,21 +72,15 @@ fig, axes = plt.subplots(1, 2, figsize=(20, 9))
 
 # left
 ax1 = axes[0]
-scatter1 = ax1.scatter(
-    embedding_lib[:, 0], embedding_lib[:, 1], c=y, cmap="Spectral", s=5, alpha=0.6
-)
-ax1.set_title(
-    f"UMAP Library\nTime: {duration_lib:.2f}s", fontsize=14, fontweight="bold"
-)
+scatter1 = ax1.scatter(embedding_lib[:, 0], embedding_lib[:, 1], c=y, cmap="Spectral", s=5, alpha=0.6)
+ax1.set_title(f"UMAP Library\nTime: {duration_lib:.2f}s", fontsize=14, fontweight="bold")
 ax1.set_xlabel("UMAP Dimension 1", fontsize=12)
 ax1.set_ylabel("UMAP Dimension 2", fontsize=12)
 ax1.grid(True, alpha=0.3)
 
 # right
 ax2 = axes[1]
-scatter2 = ax2.scatter(
-    embedding_custom[:, 0], embedding_custom[:, 1], c=y, cmap="Spectral", s=5, alpha=0.6
-)
+scatter2 = ax2.scatter(embedding_custom[:, 0], embedding_custom[:, 1], c=y, cmap="Spectral", s=5, alpha=0.6)
 ax2.set_title(
     f"Custom UMAP Implementation\nTime: {duration_custom:.2f}s",
     fontsize=14,
@@ -108,9 +102,7 @@ plt.suptitle(
 plt.tight_layout(rect=[0, 0.08, 1, 0.96])
 
 # colorbar
-cbar = fig.colorbar(
-    scatter1, ax=axes, orientation="horizontal", fraction=0.05, pad=0.15, aspect=40
-)
+cbar = fig.colorbar(scatter1, ax=axes, orientation="horizontal", fraction=0.05, pad=0.15, aspect=40)
 cbar.set_label("Forest Cover Type", fontsize=12, fontweight="bold")
 
 output_dir = "images"

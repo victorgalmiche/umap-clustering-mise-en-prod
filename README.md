@@ -80,16 +80,28 @@ By running this in the main folder, you should get an animation close to this on
 
 1. Clone the repository:
 ```
-git clone https://github.com/paquitopg/umap-clustering.git
-cd umap-clustering
+git clone https://github.com/victorgalmiche/umap-clustering-mise-en-prod.git
+
+cd umap-clustering-mise-en-prod
 ```
 
 2. Install dependencies:
 ```
-pip install -r requirements.txt
+pip install uv
+uv sync
 ```
 
 3. Start exploring notebooks in `data_exploration/` or run scripts in the main folders.
+
+4. Create a .env file like the .env.dev file
+ENV = dev means you are in a dev envrionment and you want to use dev configs.
+
+ENV = prod means you want to use prod ones.
+
+4. run the job dim_reduction in src/application
+```
+uv run src/__main__.py dim_reduction.yaml
+```
 
 
 ## 📁 Datasets (Planned)

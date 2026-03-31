@@ -117,9 +117,7 @@ for dim in dimensions:
 
     # UMAP
     start = time.time()
-    umap.UMAP(n_components=dim, n_neighbors=15, min_dist=0.1, n_jobs=-1).fit_transform(
-        X_sub
-    )
+    umap.UMAP(n_components=dim, n_neighbors=15, min_dist=0.1, n_jobs=-1).fit_transform(X_sub)
     duration = time.time() - start
     results_dim["UMAP"]["dims"].append(dim)
     results_dim["UMAP"]["times"].append(duration)
@@ -145,9 +143,7 @@ print("=" * 70)
 
 size_data = []
 for method in ["PCA", "t-SNE", "UMAP"]:
-    for size, time_val in zip(
-        results_size[method]["sizes"], results_size[method]["times"]
-    ):
+    for size, time_val in zip(results_size[method]["sizes"], results_size[method]["times"]):
         size_data.append(
             {
                 "Method": method,
@@ -218,9 +214,7 @@ if results_size["t-SNE"]["sizes"]:
 ax1.set_xlabel("Sample Size (N)", fontsize=12)
 ax1.set_ylabel("Time (s)", fontsize=12)
 ax1.set_yscale("log")
-ax1.set_title(
-    "Scalability: Sample Size (Dimension = 2)", fontsize=14, fontweight="bold"
-)
+ax1.set_title("Scalability: Sample Size (Dimension = 2)", fontsize=14, fontweight="bold")
 ax1.legend(fontsize=11)
 ax1.grid(True, alpha=0.3)
 plt.tight_layout()
@@ -280,9 +274,7 @@ plt.close()
 
 # 3. Physics Separation
 fig3, ax3 = plt.subplots(figsize=(8, 8))
-scatter = ax3.scatter(
-    embedding_final[:, 0], embedding_final[:, 1], c=y, cmap="coolwarm", s=0.1, alpha=0.5
-)
+scatter = ax3.scatter(embedding_final[:, 0], embedding_final[:, 1], c=y, cmap="coolwarm", s=0.1, alpha=0.5)
 ax3.set_title(f"Mini-BooNE Separation (N={len(X):,})", fontsize=14, fontweight="bold")
 legend_elements = [
     Line2D(
@@ -320,9 +312,7 @@ table_data = []
 for method in ["PCA", "UMAP", "t-SNE"]:
     if results_dim[method]["dims"]:
         max_dim = max(results_dim[method]["dims"])
-        max_dim_time = results_dim[method]["times"][
-            results_dim[method]["dims"].index(max_dim)
-        ]
+        max_dim_time = results_dim[method]["times"][results_dim[method]["dims"].index(max_dim)]
         table_data.append([method, f"{max_dim}D", f"{max_dim_time:.2f}s"])
     else:
         table_data.append([method, "N/A", "N/A"])

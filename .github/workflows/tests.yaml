@@ -45,7 +45,7 @@ jobs:
           git push origin HEAD:${{ github.head_ref }}
 
       - name: pylint report
-        run: uv run --with pylint pylint src
+        run: uv run pylint src
         continue-on-error: true
 
       - name: Run tests

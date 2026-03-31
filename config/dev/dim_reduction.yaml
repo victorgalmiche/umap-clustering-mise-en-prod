@@ -1,0 +1,17 @@
+
+hyperparameters: 
+  n_neighbors: 15
+  min_dist: 0.1
+  n_components: 2
+  KNN_metric: euclidean
+  KNN_method: exact
+
+metrics:
+    n_neighbors_trustworthiness: 5
+
+path_dataset: ""
+embedding_dataset: ""
+
+experiment_name: dim_reduction
+run_name: "test job"
+dataset_name: iris

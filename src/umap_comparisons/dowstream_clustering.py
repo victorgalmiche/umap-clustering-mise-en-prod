@@ -50,9 +50,7 @@ for dim in dimensions:
             learning_rate="auto",
             random_state=42,
         ),
-        "UMAP": umap.UMAP(
-            n_components=dim, n_neighbors=15, min_dist=0.1, random_state=42
-        ),
+        "UMAP": umap.UMAP(n_components=dim, n_neighbors=15, min_dist=0.1, random_state=42),
     }
 
     embeddings[dim] = {}
@@ -125,9 +123,7 @@ for eps in eps_values:
         tsne_str = f"{tsne_ari:.4f}" if tsne_ari >= 0 else "N/A"
         umap_str = f"{umap_ari:.4f}" if umap_ari >= 0 else "N/A"
 
-        print(
-            f"{eps:<10.2f} {pca_str:<12} {tsne_str:<12} {umap_str:<12} {avg_ari:<12.4f}"
-        )
+        print(f"{eps:<10.2f} {pca_str:<12} {tsne_str:<12} {umap_str:<12} {avg_ari:<12.4f}")
 
         eps_summary.append(
             {
@@ -192,9 +188,7 @@ for dim in dimensions:
 
             if len(set(labels_dbscan)) > 1:
                 ari_dbscan = adjusted_rand_score(y, labels_dbscan)
-                sil_dbscan = silhouette_score(
-                    normalized_dim_embeddings[name], labels_dbscan
-                )
+                sil_dbscan = silhouette_score(normalized_dim_embeddings[name], labels_dbscan)
             else:
                 ari_dbscan = None
                 sil_dbscan = None
@@ -227,15 +221,11 @@ print("=" * 70)
 
 df_results = pd.DataFrame(all_results)
 
-csv_filename = (
-    f"src/umap_comparisons/images/downstream_clustering_results_{n_points}.csv"
-)
+csv_filename = f"src/umap_comparisons/images/downstream_clustering_results_{n_points}.csv"
 df_results.to_csv(csv_filename, index=False)
 print(f"Results saved to: {csv_filename}")
 
-txt_filename = (
-    f"src/umap_comparisons/images/downstream_clustering_results_{n_points}.txt"
-)
+txt_filename = f"src/umap_comparisons/images/downstream_clustering_results_{n_points}.txt"
 with open(txt_filename, "w") as f:
     f.write("=" * 80 + "\n")
     f.write("DOWNSTREAM CLUSTERING EVALUATION RESULTS\n")
@@ -259,39 +249,19 @@ with open(txt_filename, "w") as f:
         f.write(f"{'Method':<10} {'ARI Score':<15} {'Silhouette Score':<18}\n")
         f.write("-" * 80 + "\n")
         for _, row in dim_results.iterrows():
-            f.write(
-                f"{row['Method']:<10} {row['K-Means_ARI']:<15.4f} {row['K-Means_Silhouette']:<18.4f}\n"
-            )
+            f.write(f"{row['Method']:<10} {row['K-Means_ARI']:<15.4f} {row['K-Means_Silhouette']:<18.4f}\n")
         f.write("\n")
 
         f.write("DBSCAN Clustering:\n")
         f.write("-" * 80 + "\n")
-        f.write(
-            f"{'Method':<10} {'ARI Score':<15} {'Silhouette Score':<18} {'Clusters':<10} {'Noise':<10}\n"
-        )
+        f.write(f"{'Method':<10} {'ARI Score':<15} {'Silhouette Score':<18} {'Clusters':<10} {'Noise':<10}\n")
         f.write("-" * 80 + "\n")
         for _, row in dim_results.iterrows():
-            ari_str = (
-                f"{row['DBSCAN_ARI']:.4f}" if pd.notna(row["DBSCAN_ARI"]) else "N/A"
-            )
-            sil_str = (
-                f"{row['DBSCAN_Silhouette']:.4f}"
-                if pd.notna(row["DBSCAN_Silhouette"])
-                else "N/A"
-            )
-            clusters_str = (
-                f"{int(row['DBSCAN_Clusters'])}"
-                if pd.notna(row["DBSCAN_Clusters"])
-                else "N/A"
-            )
-            noise_str = (
-                f"{int(row['DBSCAN_Noise'])}"
-                if pd.notna(row["DBSCAN_Noise"])
-                else "N/A"
-            )
-            f.write(
-                f"{row['Method']:<10} {ari_str:<15} {sil_str:<18} {clusters_str:<10} {noise_str:<10}\n"
-            )
+            ari_str = f"{row['DBSCAN_ARI']:.4f}" if pd.notna(row["DBSCAN_ARI"]) else "N/A"
+            sil_str = f"{row['DBSCAN_Silhouette']:.4f}" if pd.notna(row["DBSCAN_Silhouette"]) else "N/A"
+            clusters_str = f"{int(row['DBSCAN_Clusters'])}" if pd.notna(row["DBSCAN_Clusters"]) else "N/A"
+            noise_str = f"{int(row['DBSCAN_Noise'])}" if pd.notna(row["DBSCAN_Noise"]) else "N/A"
+            f.write(f"{row['Method']:<10} {ari_str:<15} {sil_str:<18} {clusters_str:<10} {noise_str:<10}\n")
         f.write("\n")
 
     f.write("=" * 80 + "\n")
@@ -304,33 +274,19 @@ print("=" * 70)
 print(f"{'Method':<10} {'Dim':<6} {'ARI':<12} {'Silhouette':<12}")
 print("-" * 70)
 for _, row in df_results.iterrows():
-    print(
-        f"{row['Method']:<10} {row['Dimension']:<6} {row['K-Means_ARI']:<12.4f} {row['K-Means_Silhouette']:<12.4f}"
-    )
+    print(f"{row['Method']:<10} {row['Dimension']:<6} {row['K-Means_ARI']:<12.4f} {row['K-Means_Silhouette']:<12.4f}")
 
 print("\n" + "=" * 70)
 print("SUMMARY: DBSCAN Results")
 print("=" * 70)
-print(
-    f"{'Method':<10} {'Dim':<6} {'ARI':<12} {'Silhouette':<12} {'Clusters':<10} {'Noise':<10}"
-)
+print(f"{'Method':<10} {'Dim':<6} {'ARI':<12} {'Silhouette':<12} {'Clusters':<10} {'Noise':<10}")
 print("-" * 70)
 for _, row in df_results.iterrows():
     ari_str = f"{row['DBSCAN_ARI']:.4f}" if pd.notna(row["DBSCAN_ARI"]) else "N/A"
-    sil_str = (
-        f"{row['DBSCAN_Silhouette']:.4f}"
-        if pd.notna(row["DBSCAN_Silhouette"])
-        else "N/A"
-    )
-    clusters_str = (
-        f"{int(row['DBSCAN_Clusters'])}" if pd.notna(row["DBSCAN_Clusters"]) else "N/A"
-    )
-    noise_str = (
-        f"{int(row['DBSCAN_Noise'])}" if pd.notna(row["DBSCAN_Noise"]) else "N/A"
-    )
-    print(
-        f"{row['Method']:<10} {row['Dimension']:<6} {ari_str:<12} {sil_str:<12} {clusters_str:<10} {noise_str:<10}"
-    )
+    sil_str = f"{row['DBSCAN_Silhouette']:.4f}" if pd.notna(row["DBSCAN_Silhouette"]) else "N/A"
+    clusters_str = f"{int(row['DBSCAN_Clusters'])}" if pd.notna(row["DBSCAN_Clusters"]) else "N/A"
+    noise_str = f"{int(row['DBSCAN_Noise'])}" if pd.notna(row["DBSCAN_Noise"]) else "N/A"
+    print(f"{row['Method']:<10} {row['Dimension']:<6} {ari_str:<12} {sil_str:<12} {clusters_str:<10} {noise_str:<10}")
 
 print("\n" + "=" * 70)
 print("EVALUATION COMPLETE")

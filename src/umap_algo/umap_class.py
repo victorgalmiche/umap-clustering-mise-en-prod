@@ -63,9 +63,7 @@ class umap_mapping:
 
         return distance_matrix
 
-    def rho_sigma(
-        self, distance_matrix: sp.csr_matrix
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    def rho_sigma(self, distance_matrix: sp.csr_matrix) -> Tuple[np.ndarray, np.ndarray]:
         """
         Compute rho and sigma for each point in the KNN graph.
         For each point i, rho_i is the distance to the closest neighbor (non-zero),
@@ -84,18 +82,14 @@ class umap_mapping:
         rho = distance_matrix.min(axis=1, explicit=True).toarray().flatten()
 
         def func(sigma: float, distances: np.ndarray, rho: float) -> float:
-            return sum(np.exp(-(np.maximum(0, distances - rho)) / sigma)) - np.log2(
-                self.n_neighbors
-            )
+            return sum(np.exp(-(np.maximum(0, distances - rho)) / sigma)) - np.log2(self.n_neighbors)
 
         sigma = np.ones(distance_matrix.shape[0])
         for i in range(distance_matrix.shape[0]):
             distances = distance_matrix[i].toarray().flatten()
             distances = distances[distances > 0]
             rho_i = rho[i]
-            sol = root_scalar(
-                func, args=(distances, rho_i), bracket=[1e-5, 1e5], method="bisect"
-            )
+            sol = root_scalar(func, args=(distances, rho_i), bracket=[1e-5, 1e5], method="bisect")
             sigma[i] = sol.root
 
         return rho, sigma
@@ -120,13 +114,9 @@ class umap_mapping:
         # Directional weights
         weights = distance_matrix.copy()
 
-        for i in range(
-            weights.shape[0]
-        ):  # Compute the weights according to UMAP formula and keeping low memory usage
+        for i in range(weights.shape[0]):  # Compute the weights according to UMAP formula and keeping low memory usage
             row_slice = slice(weights.indptr[i], weights.indptr[i + 1])
-            weights.data[row_slice] = np.exp(
-                -(np.maximum(0, weights.data[row_slice] - rho[i])) / sigma[i]
-            )
+            weights.data[row_slice] = np.exp(-(np.maximum(0, weights.data[row_slice] - rho[i])) / sigma[i])
 
         # Symmetric weights (fuzzy union)
         return weights + weights.T - weights.multiply(weights.T)
@@ -146,10 +136,7 @@ class umap_mapping:
     ) -> np.ndarray:  # See Part 3.2 https://arxiv.org/pdf/1802.03426
         return (
             (2 * self.b)
-            / (
-                (epsilon + np.linalg.norm(y_i - y_j) ** 2)
-                * (1 + self.a * np.linalg.norm(y_i - y_j) ** (2 * self.b))
-            )
+            / ((epsilon + np.linalg.norm(y_i - y_j) ** 2) * (1 + self.a * np.linalg.norm(y_i - y_j) ** (2 * self.b)))
             * (1 - weight_ij)
             * (y_i - y_j)
         )
@@ -253,9 +240,7 @@ class umap_mapping:
 
                     w_ik = 0.0
                     if k in indices[row_start:row_end]:
-                        k_idx = (
-                            np.where(indices[row_start:row_end] == k)[0][0] + row_start
-                        )
+                        k_idx = np.where(indices[row_start:row_end] == k)[0][0] + row_start
                         w_ik = data[k_idx]
 
                     grad = self.repulsive_force(yi, Y[k], w_ik)
@@ -314,9 +299,7 @@ class umap_mapping:
 
                     w_ik = 0.0
                     if k in indices[row_start:row_end]:
-                        k_idx = (
-                            np.where(indices[row_start:row_end] == k)[0][0] + row_start
-                        )
+                        k_idx = np.where(indices[row_start:row_end] == k)[0][0] + row_start
                         w_ik = data[k_idx]
 
                     grad = self.repulsive_force(yi, Y[k], w_ik)
@@ -365,13 +348,9 @@ class umap_mapping:
             ax.set_title(f"UMAP optimization - epoch {epoch}")
             return (scat,)
 
-        generator = self.optimize_generator(
-            Y, weights, n_epochs=n_epochs, learning_rate=learning_rate
-        )
+        generator = self.optimize_generator(Y, weights, n_epochs=n_epochs, learning_rate=learning_rate)
 
-        anim = FuncAnimation(
-            fig, update, frames=generator, interval=100, blit=False, repeat=False
-        )
+        anim = FuncAnimation(fig, update, frames=generator, interval=100, blit=False, repeat=False)
 
         plt.show()
 
