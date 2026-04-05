@@ -1,9 +1,20 @@
-"""A simple API to expose our trained RandomForest model for Tutanic survival."""
+"""A simple API to expose our implementation of UMAP"""
 
 import io
 from fastapi import FastAPI, File, UploadFile, HTTPException
 import pandas as pd
 import polars as pl
+import hydra
+import os
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import load_iris
+import logging
+from pathlib import Path
+
+from src.umap_algo.umap_class import umap_mapping
+from src.adapter.mlflow_tracker import ExperimentTracker
+
+logger = logging.getLogger(Path(__file__).stem)
 
 app = FastAPI(
     title="UMAP API",
@@ -43,14 +54,15 @@ async def predict(
 
     return prediction
 
+@hydra.main()
 @app.post(
     "/umap",
-    summary="Return the first 5 rows of an uploaded CSV file",
-    response_description="A list of the first 5 rows, each row represented as a dict",
+    summary="Return the UMAP projection of an uploaded CSV file",
+    response_description="a string representation of the UMAP projection",
 )
 async def umap(file: UploadFile = File(...)) -> str:
     """
-    Accept a CSV file via multipart/form‑data and return the first five rows.
+    Accept a CSV file via multipart/form‑data and return the UMAP projection.
 
     Parameters
     ----------
@@ -83,10 +95,30 @@ async def umap(file: UploadFile = File(...)) -> str:
         buffer = io.BytesIO(content)
 
         # Polars can read from a file‑like object.
+        logger.info("Reading data ...")
         df = pl.read_csv(buffer)
+        
+        # Get parameters
+        logger.info("Get model parameters ...")
+        scaler = StandardScaler()
+        with hydra.initialize(version_base=None, config_path="../config"):
+            cfg = hydra.compose(config_name="main")
+        hyperparameters = cfg.umap
+        model = umap_mapping(
+            n_neighbors=hyperparameters.n_neighbors,
+            n_components=hyperparameters.n_components,
+            min_dist=hyperparameters.min_dist,
+            KNN_metric=hyperparameters.KNN_metric,
+            KNN_method=hyperparameters.KNN_method,
+        )
+    
+        logger.info("Fitting model...")
+        dataset_standardized = scaler.fit_transform(df.to_pandas())
+        dataset_transformed = model.fit_transform(dataset_standardized)
 
-        # Grab the first five rows.
-        repr_str = df.head(5).__repr__()     # or df.__str__()
+        # Return the transformed dataset
+        logger.info("All done, returning transformed data")
+        repr_str = dataset_transformed.__str__()     # or df.__str__()
 
     except Exception as exc: 
         # Polars raises a variety of exceptions on malformed data.
@@ -96,3 +128,4 @@ async def umap(file: UploadFile = File(...)) -> str:
         ) from exc
 
     return repr_str #JSONResponse(content={"preview": preview})
+
