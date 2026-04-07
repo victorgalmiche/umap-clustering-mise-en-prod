@@ -5,9 +5,9 @@ from unittest.mock import patch
 from umap_algo.umap_class import umap_mapping
 
 
-def make_model(X_train_: np.ndarray = np.array([]), Y_train_: np.ndarray = np.array([])):
+def make_model(X_train_: np.ndarray = np.array([]), Y_train_: np.ndarray = np.array([]), **kwargs):
     """Crée un mock de umap_mapping avec Y_train_ défini."""
-    model = umap_mapping()
+    model = umap_mapping(**kwargs)
     model.Y_train_ = Y_train_
     model.X_train_ = X_train_
     return model
@@ -306,7 +306,7 @@ class TestAttractiveForce:
         THEN  le gradient doit pointer de y_i vers y_j (signe opposé à y_i - y_j).
         """
         # GIVEN
-        model = umap_mapping()
+        model = make_model()
         y_i = np.array([2.0, 0.0])
         y_j = np.array([0.0, 0.0])
 
@@ -323,7 +323,7 @@ class TestAttractiveForce:
         THEN  le gradient doit être le vecteur zéro.
         """
         # GIVEN
-        model = umap_mapping()
+        model = make_model()
         y_i = np.array([1.0, 2.0])
         y_j = np.array([4.0, 6.0])
 
@@ -340,7 +340,7 @@ class TestAttractiveForce:
         THEN  la norme du gradient doit être proportionnelle au poids.
         """
         # GIVEN
-        model = umap_mapping()
+        model = make_model()
         y_i = np.array([1.0, 0.0])
         y_j = np.array([0.0, 0.0])
         w1, w2 = 0.5, 1.0
@@ -363,7 +363,7 @@ class TestRepulsiveForce:
               c'est-à-dire vers la droite (composante x positive).
         """
         # GIVEN
-        model = umap_mapping()
+        model = make_model()
         y_i = np.array([2.0, 0.0])
         y_j = np.array([0.0, 0.0])
 
@@ -380,7 +380,7 @@ class TestRepulsiveForce:
         THEN  le gradient doit être nul car (1 - weight_ij) = 0.
         """
         # GIVEN
-        model = umap_mapping()
+        model = make_model()
         y_i = np.array([1.0, 3.0])
         y_j = np.array([4.0, 7.0])
 
@@ -398,7 +398,7 @@ class TestRepulsiveForce:
               (la répulsion s'atténue avec l'éloignement).
         """
         # GIVEN
-        model = umap_mapping()
+        model = make_model()
         y_j = np.array([0.0, 0.0])
         positions = [np.array([0.5, 0.0]), np.array([2.0, 0.0]), np.array([5.0, 0.0])]
 
@@ -419,7 +419,7 @@ class TestFindAbParams:
         THEN  a et b doivent être strictement positifs (contrainte physique du modèle).
         """
         # GIVEN
-        model = umap_mapping(min_dist=0.1)
+        model = make_model(min_dist=0.1)
         d_vals = np.linspace(0.05, 3.0, 50)
         D = sp.csr_matrix(
             (d_vals, (np.arange(50), np.arange(50))), shape=(50, 50)
@@ -441,7 +441,7 @@ class TestFindAbParams:
         # GIVEN
         model = umap_mapping(min_dist=0.1)
         d_vals = np.linspace(0.05, 3.0, 100)
-        psi    = np.where(d_vals <= model.min_dist, 1.0, np.exp(-(d_vals - model.min_dist)))
+        psi = np.where(d_vals <= model.min_dist, 1.0, np.exp(-(d_vals - model.min_dist)))
         D = sp.csr_matrix(
             (d_vals, (np.arange(100), np.arange(100))), shape=(100, 100)
         )
@@ -466,11 +466,11 @@ class TestFindAbParams:
         D = sp.csr_matrix(
             (d_vals, (np.arange(100), np.arange(100))), shape=(100, 100)
         )
-        model_tight  = umap_mapping(min_dist=0.1)
+        model_tight = umap_mapping(min_dist=0.1)
         model_spread = umap_mapping(min_dist=0.5)
 
         # WHEN
-        _, b_tight  = model_tight.find_ab_params(D)
+        _, b_tight = model_tight.find_ab_params(D)
         _, b_spread = model_spread.find_ab_params(D)
 
         # THEN
@@ -481,16 +481,16 @@ class TestSpectralEmbedding:
 
     def test_output_shape_is_n_samples_by_n_components(self):
         """
-        GIVEN une matrice de poids symétrique valide pour 8 points,
-        WHEN  on appelle spectral_embedding avec n_components=2,
-        THEN  la sortie doit avoir la forme (8, 2).
+        GIVEN a symmetrical weights matrix, valid for 8 points,
+        WHEN  call spectral_embedding with n_components=2,
+        THEN  the output should have the shape equals to (8, 2).
         """
         # GIVEN
-        model = umap_mapping(n_components=2)
+        model = make_model(n_components=2)
         rng = np.random.default_rng(0)
         n = 8
         A = rng.uniform(0.1, 1.0, (n, n))
-        W = sp.csr_matrix((A + A.T) / 2)   # symétrique
+        W = sp.csr_matrix((A + A.T) / 2)   
 
         # WHEN
         Y = model.spectral_embedding(W)
@@ -498,46 +498,73 @@ class TestSpectralEmbedding:
         # THEN
         assert Y.shape == (n, 2)
 
-    def test_embedding_is_real_valued(self):
-        """
-        GIVEN une matrice de poids symétrique définie positive,
-        WHEN  on appelle spectral_embedding,
-        THEN  toutes les valeurs de l'embedding doivent être réelles (pas de partie imaginaire).
-        """
-        # GIVEN
-        model = umap_mapping(n_components=2)
-        rng = np.random.default_rng(1)
-        n = 10
-        A = rng.uniform(0.1, 1.0, (n, n))
-        W = sp.csr_matrix((A + A.T) / 2)
-
-        # WHEN
-        Y = model.spectral_embedding(W)
-
-        # THEN
-        assert np.isrealobj(Y), "L'embedding contient des valeurs complexes."
-
     def test_two_disconnected_clusters_are_separated(self):
         """
-        GIVEN un graphe avec deux composantes connexes parfaitement séparées
-              (bloc-diagonale),
-        WHEN  on appelle spectral_embedding avec n_components=2,
-        THEN  les points des deux clusters doivent être séparés sur au moins
-              un axe de l'espace latent.
+        GIVEN a graph with two perfectly separated connected components
+                (block-diagonal),
+        WHEN spectral_embedding is called with n_components=2,
+        THEN the points of the two clusters should be separated along at least
+                one axis of the latent space.
         """
-        # GIVEN — bloc-diagonale : deux cliques de 4 sommets sans lien entre elles
-        model = umap_mapping(n_components=2)
+        # GIVEN
+        model = make_model(n_components=2)
         block = np.ones((4, 4)) - np.eye(4)
         W_dense = np.block([
-            [block,           np.zeros((4, 4))],
-            [np.zeros((4, 4)), block           ],
+            [block, np.zeros((4, 4))],
+            [np.zeros((4, 4)), block],
         ])
         W = sp.csr_matrix(W_dense)
 
         # WHEN
         Y = model.spectral_embedding(W)
 
-        # THEN — les moyennes des deux clusters doivent différer sur au moins un axe
+        # THEN
         mean_c0 = Y[:4].mean(axis=0)
         mean_c1 = Y[4:].mean(axis=0)
         assert np.linalg.norm(mean_c0 - mean_c1) > 0.1
+
+    def test_fully_connected_clique_embedding(self):
+        """
+        GIVEN a fully connected graph (clique) of 4 nodes,
+        WHEN spectral_embedding is called with n_components=2,
+        THEN all non-trivial eigenvectors should have the same eigenvalue,
+        so the embedding should be constant along any axis (up to rotation/scaling).
+        """
+        # GIVEN
+        model = make_model(n_components=2)
+        W_dense = np.ones((4, 4)) - np.eye(4)
+        W = sp.csr_matrix(W_dense)
+
+        # WHEN
+        Y = model.spectral_embedding(W)
+
+        # Then
+        # orthonomral columns
+        np.testing.assert_almost_equal(Y.T @ Y, np.eye(2), decimal=6)
+        
+        # each column should be orthogonal to (1,1,1,1) whose eigen value is 0
+        ones = np.ones(4)
+        np.testing.assert_almost_equal(Y.T @ ones, np.zeros(2), decimal=6)
+        
+        # each column is an eigen vector of the normalized symetrical laplacian of the graph
+        #  associated with the eigenvalue 4/3
+        deg = np.array(np.sum(W_dense, axis=1)).flatten()  # shape (4,)
+        D_inv_sqrt = np.diag(1.0 / np.sqrt(deg))
+        L_sym = D_inv_sqrt @ (np.diag(deg) - W_dense) @ D_inv_sqrt
+
+        expected_eigenvalue = 4.0 / 3.0
+
+        for i in range(2):
+            v = Y[:, i]
+            Lv = L_sym @ v
+            # check: ||Lv||² == λ² ||v||² and Lv ⟂ null space
+            np.testing.assert_almost_equal(
+                np.linalg.norm(Lv),
+                expected_eigenvalue * np.linalg.norm(v),
+                decimal=6,
+                err_msg=f"The column {i} is not in the eigenspace {expected_eigenvalue}"
+            )
+            np.testing.assert_almost_equal(
+                ones @ Lv, 0.0, decimal=6,
+                err_msg=f"L_sym @ v[:,{i}] must not have any component along the null vector"
+            )

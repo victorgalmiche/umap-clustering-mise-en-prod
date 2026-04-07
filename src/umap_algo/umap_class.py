@@ -182,7 +182,7 @@ class umap_mapping:
 
         eigvals, eigvecs = sp.linalg.eigsh(L, k=self.n_components + 1, which="SM")
 
-        return eigvecs[:, 1 : self.n_components + 1]
+        return eigvecs[:, 1: self.n_components + 1]
 
     def optimize(
         self,
