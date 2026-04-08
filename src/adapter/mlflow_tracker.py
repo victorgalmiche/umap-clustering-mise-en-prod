@@ -25,7 +25,7 @@ class ExperimentTracker:
         self.experiment_id = mlflow.set_experiment(experiment_name).experiment_id
         self.run_tags = run_tags
         self.run_name = run_name
-        self.current_run_id  = None
+        self.current_run_id = None
         mlflow_server = os.getenv("MLFLOW_TRACKING_URI")
         self.tracking_uri = mlflow_server
 
@@ -58,11 +58,11 @@ class ExperimentTracker:
         """Log multiple parameters at once"""
         logger.info(f"Logging params: {params}")
         mlflow.log_params(params)
-    
+
     def log_pyfunc_model(
-        self, 
+        self,
         pyfunc_model,
-        model_config, 
+        model_config,
         artifact_path: str,
         registered_model_name: str,
     ) -> None:
@@ -82,7 +82,7 @@ class ExperimentTracker:
             artifact_path=artifact_path,
             python_model=pyfunc_model,
             model_config=model_config,
-            registered_model_name=registered_model_name
+            registered_model_name=registered_model_name,
         )
         logger.info("Model successfully logged.")
         
@@ -90,7 +90,7 @@ class ExperimentTracker:
 class UmapStorage(mlflow.pyfunc.PythonModel):
     def __init__(self, umap_model):
         self.umap_model = umap_model
-    
+
     def load_context(self, context):
         """
         loading data from S3 via s3fs
@@ -100,10 +100,10 @@ class UmapStorage(mlflow.pyfunc.PythonModel):
 
         fs = s3fs.S3FileSystem()
 
-        with fs.open(path_X, 'rb') as f:
+        with fs.open(path_X, "rb") as f:
             X_df = pd.read_parquet(f)
 
-        with fs.open(path_Y, 'rb') as f:
+        with fs.open(path_Y, "rb") as f:
             Y_df = pd.read_parquet(f)
 
         self.umap_model.X_train_ = X_df.values

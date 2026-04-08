@@ -53,7 +53,7 @@ def job(cfg):
     model.X_train_, model.Y_train_ = np.array([]), np.array([])
     pyfunc_model = UmapStorage(model)
     model_config = {
-        "path_X_train": cfg.mlflow.path_X_train, 
+        "path_X_train": cfg.mlflow.path_X_train,
         "path_Y_train": cfg.mlflow.path_Y_train,
     }
     pd.DataFrame(dataset_transformed).to_parquet(model_config["path_X_train"])
@@ -64,10 +64,10 @@ def job(cfg):
         experiment_tracker.log_metrics(metrics)
         experiment_tracker.log_params(hyperparameters)
         experiment_tracker.log_pyfunc_model(
-            pyfunc_model=pyfunc_model, 
+            pyfunc_model=pyfunc_model,
             artifact_path=cfg.mlflow.artifact_path,
             model_config=model_config,
-            registered_model_name=cfg.mlflow.registered_model_name
+            registered_model_name=cfg.mlflow.registered_model_name,
         )
 
     # use model
