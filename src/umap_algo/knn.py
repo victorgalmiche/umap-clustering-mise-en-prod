@@ -4,9 +4,9 @@ from typing import Tuple
 
 
 def exact_knn_all_points(
-    X: np.ndarray, 
-    k: int, metric: 
-    str = "euclidean", 
+    X: np.ndarray,
+    k: int,
+    metric: str = "euclidean",
     X_train: np.ndarray = np.array([]),
 ) -> Tuple[np.ndarray, np.ndarray]:
     """

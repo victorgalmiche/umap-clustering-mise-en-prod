@@ -182,7 +182,7 @@ class umap_mapping:
 
         eigvals, eigvecs = sp.linalg.eigsh(L, k=self.n_components + 1, which="SM")
 
-        return eigvecs[:, 1: self.n_components + 1]
+        return eigvecs[:, 1 : self.n_components + 1]
 
     def optimize(
         self,
@@ -248,7 +248,7 @@ class umap_mapping:
                 for _ in range(n_neg):
                     if only_transform:
                         k = np.random.randint(0, n_train)
-                        # assert k != i  # sometimes true  
+                        # assert k != i  # sometimes true
                     else:
                         k = np.random.randint(0, n_samples)
                         if k == i:
@@ -431,7 +431,7 @@ class umap_mapping:
         self.Y_train_ = Y
 
         return Y
-    
+
     def _cross_weights(
         self,
         indices: np.ndarray,
@@ -460,24 +460,22 @@ class umap_mapping:
         weights : csr_matrix, shape (m_new, n_train)
             Sparse matrix of fuzzy weights between new and training points.
         """
-        
+
         m, k = distances.shape
         n_train = self.X_train_.shape[0]
-                     
-        vals = np.exp(
-            -np.maximum(0.0, distances - rho[:, None]) / sigma[:, None]
-        )                                   
+
+        vals = np.exp(-np.maximum(0.0, distances - rho[:, None]) / sigma[:, None])
 
         return sp.csr_matrix(
             (vals.ravel(), (np.repeat(np.arange(m), k), indices.ravel())),
             shape=(m, n_train),
         )
-    
+
     def _initialize_with_barycenter(self, weights: sp.csr_matrix) -> np.ndarray:
         """
         Initialize the embedding of new points using the training points
-        and the fuzzy cross-weights. The embedding of new points are initialized 
-        by the barycenter of their neighbors in the embedding space. 
+        and the fuzzy cross-weights. The embedding of new points are initialized
+        by the barycenter of their neighbors in the embedding space.
 
         Parameters:
         ---------
@@ -497,8 +495,8 @@ class umap_mapping:
 
         for i in range(m):
             row = weights.getrow(i)
-            nbr_idx = row.indices  
-            nbr_w = row.data 
+            nbr_idx = row.indices
+            nbr_w = row.data
 
             if nbr_w.sum() > 0:
                 Y_new[i] = (self.Y_train_[nbr_idx] * nbr_w[:, None]).sum(axis=0) / nbr_w.sum()
@@ -550,29 +548,22 @@ class umap_mapping:
 
         if not hasattr(self, "X_train_") or not hasattr(self, "Y_train_"):
             raise RuntimeError("Call .fit_transform() before .transform().")
-        
+
         # 1. KNN
-        index, distances = exact_knn_all_points(
-            X=X_new, k=self.n_neighbors, metric=self.metric, X_train=self.X_train_
-        )
+        index, distances = exact_knn_all_points(X=X_new, k=self.n_neighbors, metric=self.metric, X_train=self.X_train_)
 
         # 2. rho & sigma
         rho, sigma = self.rho_sigma(sp.csr_matrix(distances))
 
-        # 3. non-symetric weigghts 
+        # 3. non-symetric weigghts
         weights = self._cross_weights(index, distances, rho, sigma)
 
         # 4. initialize embeddings as a barycenters of trained neighbors
         Y_new = self._initialize_with_barycenter(weights=weights)
-        
+
         # 5. optimize
         Y_new_tuned = self.optimize(
-            Y=Y_new, 
-            weights=weights, 
-            n_epochs=n_epochs, 
-            learning_rate=learning_rate, 
-            only_transform=True
+            Y=Y_new, weights=weights, n_epochs=n_epochs, learning_rate=learning_rate, only_transform=True
         )
 
         return Y_new_tuned
-

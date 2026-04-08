@@ -54,7 +54,7 @@ class ExperimentTracker:
         """Log multiple parameters at once"""
         logger.info(f"Logging params: {params}")
         mlflow.log_params(params)
-    
+
     def log_pyfunc_model(self, pyfunc_model, artifact_path: str) -> None:
         """
         Log a PythonModel (PyFunc) to MLflow under the given artifact path.
@@ -66,12 +66,9 @@ class ExperimentTracker:
         artifact_path : str
             Path of the mlflow experiment where the model will be stored.
         """
-        
+
         logger.info(f"Logging PyFunc model to artifact path: {artifact_path}")
-        mlflow.pyfunc.log_model(
-            artifact_path=artifact_path,
-            python_model=pyfunc_model
-        )
+        mlflow.pyfunc.log_model(artifact_path=artifact_path, python_model=pyfunc_model)
         logger.info("Model successfully logged.")
 
 
@@ -87,7 +84,5 @@ class UmapStorage(mlflow.pyfunc.PythonModel):
             X_new = model_input.values
         else:
             X_new = np.array(model_input)
-        
-        return self.umap_model.transform(X_new)
 
-    
+        return self.umap_model.transform(X_new)
