@@ -103,6 +103,13 @@ ENV = prod means you want to use prod ones.
 uv run -m src.scripts.dim_reduction
 ```
 
+## Maintenance 
+
+1. run a test 
+
+```{bash}
+PYTHONPATH=src uv run pytest tests/test_knn.py::TestExactKnnAllPoints
+```
 
 ## 📁 Datasets (Planned)
 

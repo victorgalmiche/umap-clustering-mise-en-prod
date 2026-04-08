@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 
 from src.umap_algo.umap_class import umap_mapping
-from src.adapter.mlflow_tracker import ExperimentTracker
+from src.adapter.mlflow_tracker import ExperimentTracker, UmapStorage
 
 logger = logging.getLogger(Path(__file__).stem)
 
@@ -41,6 +41,8 @@ def job(cfg):
 
     metrics = {"trustworthiness": trust}
 
+    pyfunc_model = UmapStorage(model)
+
     experiment_tracker = ExperimentTracker(
         experiment_name=cfg.mlflow.experiment_name,
         run_name=cfg.mlflow.run_name,
@@ -51,6 +53,8 @@ def job(cfg):
     with experiment_tracker.run():
         experiment_tracker.log_metrics(metrics)
         experiment_tracker.log_params(hyperparameters)
+        experiment_tracker.log_pyfunc_model(pyfunc_model, artifact_path="umap_model")
+
     logger.info("End of the job...")
 
 

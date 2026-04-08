@@ -6,6 +6,7 @@ import mlflow.pyfunc
 from typing import Dict, Union
 from contextlib import contextmanager
 import logging
+import numpy as np
 
 logger = logging.getLogger(Path(__file__).stem)
 
@@ -53,3 +54,38 @@ class ExperimentTracker:
         """Log multiple parameters at once"""
         logger.info(f"Logging params: {params}")
         mlflow.log_params(params)
+
+
+class UmapStorage(mlflow.pyfunc.PythonModel):
+    def __init__(self, umap_model):
+        self.umap_model = umap_model
+
+    def predict(self, context, model_input):
+        """
+        model_input : np.ndarray ou pandas.DataFrame
+        """
+        if hasattr(model_input, "values"):
+            X_new = model_input.values
+        else:
+            X_new = np.array(model_input)
+        
+        return self.umap_model.transform(X_new)
+
+    def log_pyfunc_model(self, pyfunc_model, artifact_path: str) -> None:
+        """
+        Log a PythonModel (PyFunc) to MLflow under the given artifact path.
+
+        Parameters
+        ----------
+        pyfunc_model : mlflow.pyfunc.PythonModel
+            Instance of PyFunc to register.
+        artifact_path : str
+            Path of the mlflow experiment where the model will be stored.
+        """
+        
+        logger.info(f"Logging PyFunc model to artifact path: {artifact_path}")
+        mlflow.pyfunc.log_model(
+            artifact_path=artifact_path,
+            python_model=pyfunc_model
+        )
+        logger.info("Model successfully logged.")
