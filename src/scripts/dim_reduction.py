@@ -73,9 +73,9 @@ def job(cfg):
     # use model
     # import mlflow
     # run_id = experiment_tracker.current_run_id
-    # artifact_path = cfg.mlflow.artifact_path 
+    # artifact_path = cfg.mlflow.artifact_path
     # model_uri = f"runs:/{run_id}/{artifact_path}"
-    # loaded_model = mlflow.pyfunc.load_model(experiment_tracker.model_uri) 
+    # loaded_model = mlflow.pyfunc.load_model(experiment_tracker.model_uri)
 
     logger.info("End of the job...")
 

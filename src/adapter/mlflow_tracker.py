@@ -85,7 +85,7 @@ class ExperimentTracker:
             registered_model_name=registered_model_name,
         )
         logger.info("Model successfully logged.")
-        
+
 
 class UmapStorage(mlflow.pyfunc.PythonModel):
     def __init__(self, umap_model):
