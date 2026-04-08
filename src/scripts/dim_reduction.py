@@ -4,7 +4,6 @@ import hydra
 import os
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
 from sklearn.manifold import trustworthiness
 import logging
 from pathlib import Path
@@ -21,7 +20,6 @@ def job(cfg):
     # dataset = pd.read_parquet(config.path_dataset)
     logger.info("Loading Data...")
     dataset = load_iris().data
-    X_train, X_test = train_test_split(dataset, test_size=0.2, random_state=42)
 
     scaler = StandardScaler()
     hyperparameters = cfg.umap
@@ -34,13 +32,9 @@ def job(cfg):
     )
 
     logger.info("Fitting model...")
-    dataset_standardized = scaler.fit_transform(X_train)
+    dataset_standardized = scaler.fit_transform(dataset)
     dataset_transformed = model.fit_transform(dataset_standardized)
 
-    embedding_test = model.transform(X_test)
-    
-    if True:
-        return 5 
     trust = trustworthiness(
         X=dataset, X_embedded=dataset_transformed, n_neighbors=cfg.metrics.n_neighbors_trustworthiness
     )
