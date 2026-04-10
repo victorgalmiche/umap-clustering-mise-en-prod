@@ -20,6 +20,7 @@ Aka how to test the app without making noisy commits to the main branch. A propo
 
 - create a pull request. Note that a temporary pull request can be created on Github.
 - bump tags for the Docker images
+- you can still make changes after tagging the Docker images, until these are pulled / deployed, cf below.
 
 # Developper updates the Deployment repo
 
