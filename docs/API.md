@@ -23,7 +23,14 @@ The source code defines entrypoints, which correspond an URL. The client sends a
 
 Note that to send files, the client needs to send a POST request.
 
+Several parameters can be added, including:
+- `n_neighbors`: 15 by default,
+- `n_components`: 2 by default,
+- `min_dist`: 0.1 by default,
+- `knn_metric`: "euclidean" by default,
+- `knn_method`: "approx" by default,
+
 # Notes
 
-The code currently retrieves parameters from the `config/` directory using hydra. We intended to retrieve model parameters from a MLFlow instance later.
+When the hand-made umap algorithm does not work, the API switches to the umap-learn algorithm. The KNN is then automatically approximated and not exact.
 

@@ -16,4 +16,4 @@ COPY src ./src
 COPY app ./app
 COPY config ./config
 
-CMD ["bash", "-c", "./app/run.sh"]
+CMD ["bash", "-c", "./app/api/run.sh"]
