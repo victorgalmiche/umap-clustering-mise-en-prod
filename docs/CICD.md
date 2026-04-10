@@ -21,7 +21,8 @@ Another Docker image is required for the Streamlit front-end.
 
 # Continuous Deployment
 
-- Deployment is handled by ArgoCD based on the `https://github.com/victorgalmiche/umap-deployment` repository
-- configuration is in `deployment`. The API is deployed to `https://umap-api-mmvs.lab.sspcloud.fr`
+- Deployment is handled by ArgoCD based on the `https://github.com/victorgalmiche/umap-deployment` repository. Configuration is in `deployment`. 
+- The backend API is deployed to `https://umap-api-mmvs.lab.sspcloud.fr`
+- The front-end streamlit API is deployed to `https://umap-streamlit-mmvs.lab.sspcloud.fr`
 - ArgoCD detects pushes to this repository, and updates the deployment.
 
