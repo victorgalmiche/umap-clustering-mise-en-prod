@@ -22,4 +22,4 @@ jobs:
           context: .
           file: ./app/api/Dockerfile
           push: true
-          tags: ${{ secrets.SEB_DOCKERHUB_USERNAME }}/umap-api:v0.2.0
+          tags: ${{ secrets.SEB_DOCKERHUB_USERNAME }}/umap-api:v0.2.1
