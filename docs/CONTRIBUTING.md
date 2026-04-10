@@ -21,6 +21,7 @@ Aka how to test the app without making noisy commits to the main branch. A propo
 - create a pull request. Note that a temporary pull request can be created on Github.
 - bump tags for the Docker images
 - you can still make changes after tagging the Docker images, until these are pulled / deployed, cf below.
+- merge the pull request (this triggers a push to DockerHub)
 
 # Developper updates the Deployment repo
 
@@ -31,6 +32,7 @@ Aka how to test the app without making noisy commits to the main branch. A propo
 
 _Why this is necessary_ : ArgoCD pulls from DockerHub, but only once for each tag. This is a Kubernetes default config: the image is pulled IfNotPresent.
 Consequently, you need to modify the image tag in `deployment.yaml` to pull an updated Docker image.
+Therefore there is a small uncertainty in the exact version that is deployed. A SHA digest can be used to fix the exact version of the Docker image.
 
 Note : two alternatives. 1) If the image tag is not specified or is set to latest, the pull policiy defaults to Always. 2) An ArgoCD image updater resource (an additional pod)can detect updates to DockerHub. It does so by making commits to the deployment repository
 
