@@ -1,15 +1,15 @@
-""" """
-
-import hydra
-import os
-from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import load_iris
-from sklearn.manifold import trustworthiness
 import logging
+import os
 from pathlib import Path
 
+import hydra
+from sklearn.datasets import load_iris
+from sklearn.manifold import trustworthiness
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+
+from src.adapter.mlflow_tracker import ExperimentTracker, UmapStorage
 from src.umap_algo.umap_class import umap_mapping
-from src.adapter.mlflow_tracker import ExperimentTracker
 
 logger = logging.getLogger(Path(__file__).stem)
 
@@ -44,13 +44,32 @@ def job(cfg):
     experiment_tracker = ExperimentTracker(
         experiment_name=cfg.mlflow.experiment_name,
         run_name=cfg.mlflow.run_name,
-        run_tags={"user": os.getenv("USER"), "dataset": cfg.mlflow.dataset_name},
+        run_tags={"user": os.getenv("GIT_USER_NAME"), "dataset": cfg.mlflow.dataset_name},
     )
 
-    logger.info("Logging metrics, params...")
+    logger.info("Preparing model registry...")
+    model.X_train_, model.Y_train_ = np.array([]), np.array([])
+    pyfunc_model = UmapStorage(model)
+
+    logger.info("Logging metrics, params, registering model...")
     with experiment_tracker.run():
         experiment_tracker.log_metrics(metrics)
         experiment_tracker.log_params(hyperparameters)
+        experiment_tracker.log_pyfunc_model(
+            pyfunc_model=pyfunc_model,
+            artifact_path=cfg.mlflow.artifact_path,
+            registered_model_name=cfg.mlflow.registered_model_name,
+            X_train=dataset_standardized,
+            Y_train=dataset_transformed,
+        )
+
+    # use model
+    # import mlflow
+    # run_id = experiment_tracker.current_run_id
+    # artifact_path = cfg.mlflow.artifact_path
+    # model_uri = f"runs:/{run_id}/{artifact_path}"
+    # loaded_model = mlflow.pyfunc.load_model(experiment_tracker.model_uri)
+
     logger.info("End of the job...")
 
 

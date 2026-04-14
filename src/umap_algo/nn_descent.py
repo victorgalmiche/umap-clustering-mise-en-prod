@@ -2,13 +2,13 @@
 Efficient k-nearest neighbor graph construction for generic similarity measures.
 In Proceedings of the 20th international conference on World wide web (pp. 577-586)."""
 
-import numpy as np
 import heapq
+
+import numpy as np
 from scipy.spatial.distance import pdist, squareform
-from typing import List, Tuple
 
 
-def approx_knn_all_points(X: np.ndarray, k: int, metric: str = "euclidean") -> Tuple[np.ndarray, np.ndarray]:
+def approx_knn_all_points(X: np.ndarray, k: int, metric: str = "euclidean") -> tuple[np.ndarray, np.ndarray]:
     """
     Calcule les k plus proches voisins approximés pour tous les points du dataset.
     S'appuie sur l'algorithme NNDescent.
@@ -36,7 +36,7 @@ def approx_knn_all_points(X: np.ndarray, k: int, metric: str = "euclidean") -> T
     return NNDescent(X, sigma, k)
 
 
-def NNDescent(V: np.ndarray, sigma: np.ndarray, K: int, max_iter: int = 1000) -> Tuple[np.ndarray, np.ndarray]:
+def NNDescent(V: np.ndarray, sigma: np.ndarray, K: int, max_iter: int = 1000) -> tuple[np.ndarray, np.ndarray]:
     """Algorithme 1 de l'article
     Inputs:
         V: ndarray (N, d), the dataset
@@ -87,7 +87,7 @@ def NNDescent(V: np.ndarray, sigma: np.ndarray, K: int, max_iter: int = 1000) ->
     return np.array(indices), np.array(distances)
 
 
-def reverse(B: List[List[Tuple[float, int]]]) -> List[List[Tuple[float, int]]]:
+def reverse(B: list[list[tuple[float, int]]]) -> list[list[tuple[float, int]]]:
     N = len(B)
     R = [[] for _ in range(N)]
     for u in range(N):
@@ -96,7 +96,7 @@ def reverse(B: List[List[Tuple[float, int]]]) -> List[List[Tuple[float, int]]]:
     return R
 
 
-def update_nn(H: List[Tuple[float, int]], x: Tuple[float, int]) -> int:
+def update_nn(H: list[tuple[float, int]], x: tuple[float, int]) -> int:
     w, u = x
 
     # Si u est déjà dans le tas

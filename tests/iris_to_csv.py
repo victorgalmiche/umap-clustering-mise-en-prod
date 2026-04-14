@@ -1,14 +1,15 @@
 """
-Convert the scikit‑learn Iris dataset to a CSV file using Polars.
+Convert the scikit-learn Iris dataset to a CSV file using Polars.
 
 The resulting CSV contains:
     - The four numeric features (sepal length/width, petal length/width)
     - The integer target (0, 1, 2)
-    - A human‑readable species name (setosa, versicolor, virginica)
+    - A human-readable species name (setosa, versicolor, virginica)
 """
 
 import polars as pl
 from sklearn.datasets import load_iris
+
 
 def iris_to_csv(csv_path: str = "tests/iris.csv") -> None:
     # 1️⃣ Load the dataset
@@ -35,6 +36,7 @@ def iris_to_csv(csv_path: str = "tests/iris.csv") -> None:
     # 3️⃣ Write to CSV
     df.write_csv(csv_path)
     print(f"✅ Iris dataset written to '{csv_path}'")
+
 
 if __name__ == "__main__":
     iris_to_csv()

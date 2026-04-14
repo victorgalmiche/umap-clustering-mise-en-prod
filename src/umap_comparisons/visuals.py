@@ -1,9 +1,10 @@
+import time
+
 import matplotlib.pyplot as plt
+import umap
 from sklearn.datasets import fetch_openml
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
-import umap
-import time
 
 print("Loading Fashion-MNIST...")
 

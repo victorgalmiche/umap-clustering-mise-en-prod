@@ -1,11 +1,13 @@
+import logging
 import os
-import mlflow
+from contextlib import contextmanager
 from pathlib import Path
+
+import mlflow
 import mlflow.models
 import mlflow.pyfunc
-from typing import Dict, Union
-from contextlib import contextmanager
-import logging
+import numpy as np
+import tempfile
 
 logger = logging.getLogger(Path(__file__).stem)
 
@@ -22,6 +24,7 @@ class ExperimentTracker:
         self.experiment_id = mlflow.set_experiment(experiment_name).experiment_id
         self.run_tags = run_tags
         self.run_name = run_name
+        self.current_run_id = None
         mlflow_server = os.getenv("MLFLOW_TRACKING_URI")
         self.tracking_uri = mlflow_server
 
@@ -36,6 +39,7 @@ class ExperimentTracker:
     @contextmanager
     def run(self):
         run = mlflow.start_run(run_name=self.run_name)
+        self.current_run_id = run.info.run_id
         mlflow.set_tags(self.run_tags)
         try:
             yield run
@@ -44,12 +48,72 @@ class ExperimentTracker:
 
     def log_metrics(
         self,
-        metrics: Dict[str, Union[int, float, None]],
+        metrics: dict[str, int | float | None],
     ) -> None:
         logger.info(f"Logging metrics {metrics}")
         mlflow.log_metrics(metrics=metrics)
 
-    def log_params(self, params: Dict[str, Union[str, int, float, None]]) -> None:
+    def log_params(self, params: dict[str, str | int | float | None]) -> None:
         """Log multiple parameters at once"""
         logger.info(f"Logging params: {params}")
         mlflow.log_params(params)
+
+    def log_pyfunc_model(
+        self,
+        pyfunc_model,
+        artifact_path: str,
+        registered_model_name: str,
+        X_train: np.ndarray,
+        Y_train: np.ndarray,
+    ) -> None:
+
+        logger.info(f"Logging PyFunc model to artifact path: {artifact_path}")
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path_X = os.path.join(tmp_dir, "X_train.npy")
+            path_Y = os.path.join(tmp_dir, "Y_train.npy")
+
+            np.save(path_X, X_train)
+            np.save(path_Y, Y_train)
+
+            mlflow.pyfunc.log_model(
+                artifact_path=artifact_path,
+                python_model=pyfunc_model,
+                artifacts={
+                    "X_train": path_X,
+                    "Y_train": path_Y,
+                },
+                registered_model_name=registered_model_name,
+            )
+
+        logger.info("Model successfully logged.")
+
+
+class UmapStorage(mlflow.pyfunc.PythonModel):
+    def __init__(self, umap_model):
+        self.umap_model = umap_model
+
+    def load_context(self, context):
+        """
+        Load data from MLflow artifacts
+        """
+
+        path_X = context.artifacts["X_train"]
+        path_Y = context.artifacts["Y_train"]
+
+        X_train = np.load(path_X)
+        Y_train = np.load(path_Y)
+
+        self.umap_model.X_train_ = X_train
+        self.umap_model.Y_train_ = Y_train
+
+    def predict(self, context, model_input):
+        """
+        model_input : np.ndarray ou pandas.DataFrame
+        """
+        if hasattr(model_input, "values"):
+            X_new = model_input.values
+        else:
+            X_new = np.array(model_input)
+
+        return self.umap_model.transform(X_new)
