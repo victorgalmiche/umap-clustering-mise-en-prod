@@ -6,6 +6,10 @@ UMAP-Clustering is a project that applies Uniform Manifold Approximation and Pro
 
 UMAP is known for producing meaningful low-dimensional embeddings that preserve local and some global structure of the original data, making it useful not just for visualization but also as a preprocessing step before clustering.
 
+This project implements
+- a backend API : a user can send a CSV file and obtain a low-dimensional embedding of his dataset. The backend is deployed at : `umap-api-mmvs.lab.sspcloud.fr`.
+- a front-end website : a friendly interface to send your CSV file to the API and display the results. The frond-end allows the user to set parameters easily.
+
 
 ## 🚀 Features
 

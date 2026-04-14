@@ -1,4 +1,4 @@
-name: api-ci
+name: streamlit-ci
 
 on:
   push:
@@ -20,6 +20,6 @@ jobs:
       - uses: docker/build-push-action@v7
         with:
           context: .
-          file: ./app/api/Dockerfile
+          file: ./app/streamlit/Dockerfile
           push: true
-          tags: ${{ secrets.SEB_DOCKERHUB_USERNAME }}/umap-api:v0.2.1
+          tags: ${{ secrets.SEB_DOCKERHUB_USERNAME }}/umap-streamlit:v0.2.1
