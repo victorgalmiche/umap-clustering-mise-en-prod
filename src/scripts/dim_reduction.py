@@ -36,9 +36,7 @@ def job(cfg):
     dataset_transformed = model.fit_transform(dataset_standardized)
 
     trust = trustworthiness(
-        X=dataset,
-        X_embedded=dataset_transformed,
-        n_neighbors=cfg.metrics.n_neighbors_trustworthiness
+        X=dataset, X_embedded=dataset_transformed, n_neighbors=cfg.metrics.n_neighbors_trustworthiness
     )
 
     metrics = {"trustworthiness": trust}
@@ -62,7 +60,7 @@ def job(cfg):
             artifact_path=cfg.mlflow.artifact_path,
             registered_model_name=cfg.mlflow.registered_model_name,
             X_train=dataset_standardized,
-            Y_train=dataset_transformed
+            Y_train=dataset_transformed,
         )
 
     # use model

@@ -87,8 +87,7 @@ class umap_mapping:
         rho = distance_matrix.min(axis=1, explicit=True).toarray().flatten()
 
         def func(sigma: float, distances: np.ndarray, rho: float) -> float:
-            return (sum(np.exp(-(np.maximum(0, distances - rho)) / sigma))
-                    - np.log2(self.n_neighbors))
+            return sum(np.exp(-(np.maximum(0, distances - rho)) / sigma)) - np.log2(self.n_neighbors)
 
         sigma = np.ones(distance_matrix.shape[0])
         for i in range(distance_matrix.shape[0]):
@@ -126,8 +125,7 @@ class umap_mapping:
         # Compute the weights according to UMAP formula and keeping low memory usage
         for i in range(weights.shape[0]):
             row_slice = slice(weights.indptr[i], weights.indptr[i + 1])
-            weights.data[row_slice] = np.exp(-(np.maximum(0, weights.data[row_slice] - rho[i]))
-                                             / sigma[i])
+            weights.data[row_slice] = np.exp(-(np.maximum(0, weights.data[row_slice] - rho[i])) / sigma[i])
 
         # Symmetric weights (fuzzy union)
         return weights + weights.T - weights.multiply(weights.T)
@@ -147,8 +145,7 @@ class umap_mapping:
     ) -> np.ndarray:  # See Part 3.2 https://arxiv.org/pdf/1802.03426
         return (
             (2 * self.b)
-            / ((epsilon + np.linalg.norm(y_i - y_j) ** 2)
-                * (1 + self.a * np.linalg.norm(y_i - y_j) ** (2 * self.b)))
+            / ((epsilon + np.linalg.norm(y_i - y_j) ** 2) * (1 + self.a * np.linalg.norm(y_i - y_j) ** (2 * self.b)))
             * (1 - weight_ij)
             * (y_i - y_j)
         )
@@ -192,7 +189,7 @@ class umap_mapping:
 
         eigvals, eigvecs = sp.linalg.eigsh(L, k=self.n_components + 1, which="SM")
 
-        return eigvecs[:, 1: self.n_components + 1]
+        return eigvecs[:, 1 : self.n_components + 1]
 
     def optimize(
         self,
@@ -244,7 +241,7 @@ class umap_mapping:
 
                     if np.random.random() > w_ij:
                         continue
-                    if only_transform:      # Only transform given the original points
+                    if only_transform:  # Only transform given the original points
                         grad = self.attractive_force(yi, self.Y_train_[j], w_ij)
                     else:
                         grad = self.attractive_force(yi, Y[j], w_ij)
@@ -379,12 +376,7 @@ class umap_mapping:
 
             return (scat,)
 
-        generator = self.optimize_generator(
-            Y=Y,
-            weights=weights,
-            n_epochs=n_epochs,
-            learning_rate=learning_rate
-        )
+        generator = self.optimize_generator(Y=Y, weights=weights, n_epochs=n_epochs, learning_rate=learning_rate)
 
         anim = FuncAnimation(fig, update, frames=generator, interval=100, blit=False, repeat=False)
 
@@ -570,12 +562,7 @@ class umap_mapping:
             raise RuntimeError("Call .fit_transform() before .transform().")
 
         # 1. KNN
-        index, distances = exact_knn_all_points(
-            X=X_new,
-            k=self.n_neighbors,
-            metric=self.metric,
-            X_train=self.X_train_
-        )
+        index, distances = exact_knn_all_points(X=X_new, k=self.n_neighbors, metric=self.metric, X_train=self.X_train_)
 
         # 2. rho & sigma
         rho, sigma = self.rho_sigma(sp.csr_matrix(distances))
@@ -588,11 +575,7 @@ class umap_mapping:
 
         # 5. optimize
         Y_new_tuned = self.optimize(
-            Y=Y_new,
-            weights=weights,
-            n_epochs=n_epochs,
-            learning_rate=learning_rate,
-            only_transform=True
+            Y=Y_new, weights=weights, n_epochs=n_epochs, learning_rate=learning_rate, only_transform=True
         )
 
         return Y_new_tuned
