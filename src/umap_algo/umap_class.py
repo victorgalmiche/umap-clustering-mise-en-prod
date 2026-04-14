@@ -1,16 +1,16 @@
 # Data Structure
-import numpy as np
-import scipy.sparse as sp
-from typing import Optional, Tuple, Generator
+from collections.abc import Generator
 
 # Plot
 import matplotlib.pyplot as plt
+import numpy as np
+import scipy.sparse as sp
 from matplotlib.animation import FuncAnimation
+from scipy.optimize import curve_fit, root_scalar
 
 # Utils
 from .knn import exact_knn_all_points
 from .nn_descent import approx_knn_all_points
-from scipy.optimize import root_scalar, curve_fit
 
 
 class umap_mapping:
@@ -41,7 +41,8 @@ class umap_mapping:
         X: array-like, shape (n_samples, n_features)
 
         Returns:
-        distance_matrix: sparse matrix, shape (n_samples, n_samples) - distance matrix of the KNN graph
+        distance_matrix: sparse matrix, shape (n_samples, n_samples)
+            - distance matrix of the KNN graph
         ---------
         """
         K = self.n_neighbors
@@ -66,7 +67,7 @@ class umap_mapping:
 
         return distance_matrix
 
-    def rho_sigma(self, distance_matrix: sp.csr_matrix) -> Tuple[np.ndarray, np.ndarray]:
+    def rho_sigma(self, distance_matrix: sp.csr_matrix) -> tuple[np.ndarray, np.ndarray]:
         """
         Compute rho and sigma for each point in the KNN graph.
         For each point i, rho_i is the distance to the closest neighbor (non-zero),
@@ -77,7 +78,8 @@ class umap_mapping:
         distance_matrix: sparse matrix, shape (n_samples, d) - distance matrix of the KNN graph
 
         Returns:
-        rho: array-like, shape (n_samples,) - the distance to the closest neighbor (non-zero) for each point
+        rho: array-like, shape (n_samples,)
+            - the distance to the closest neighbor (non-zero)for each point
         sigma: array-like, shape (n_samples,)
         ---------
         """
@@ -85,7 +87,8 @@ class umap_mapping:
         rho = distance_matrix.min(axis=1, explicit=True).toarray().flatten()
 
         def func(sigma: float, distances: np.ndarray, rho: float) -> float:
-            return sum(np.exp(-(np.maximum(0, distances - rho)) / sigma)) - np.log2(self.n_neighbors)
+            return (sum(np.exp(-(np.maximum(0, distances - rho)) / sigma))
+                    - np.log2(self.n_neighbors))
 
         sigma = np.ones(distance_matrix.shape[0])
         for i in range(distance_matrix.shape[0]):
@@ -105,12 +108,15 @@ class umap_mapping:
 
         ---------
         Inputs:
-        distance_matrix: sparse matrix, shape (n_samples, n_samples) - distance matrix of the KNN graph
-        rho: array-like, shape (n_samples,) - the distance to the closest neighbor (non-zero) for each point
+        distance_matrix: sparse matrix, shape (n_samples, n_samples)
+            - distance matrix of the KNN graph
+        rho: array-like, shape (n_samples,)
+            - the distance to the closest neighbor (non-zero) for each point
         sigma: array-like, shape (n_samples,)
 
         Returns:
-        adjusted_weights: sparse matrix, shape (n_samples, n_samples) - adjusted weights of the KNN graph
+        adjusted_weights: sparse matrix, shape (n_samples, n_samples)
+            - adjusted weights of the KNN graph
         ---------
         """
 
@@ -120,7 +126,8 @@ class umap_mapping:
         # Compute the weights according to UMAP formula and keeping low memory usage
         for i in range(weights.shape[0]):
             row_slice = slice(weights.indptr[i], weights.indptr[i + 1])
-            weights.data[row_slice] = np.exp(-(np.maximum(0, weights.data[row_slice] - rho[i])) / sigma[i])
+            weights.data[row_slice] = np.exp(-(np.maximum(0, weights.data[row_slice] - rho[i]))
+                                             / sigma[i])
 
         # Symmetric weights (fuzzy union)
         return weights + weights.T - weights.multiply(weights.T)
@@ -140,20 +147,23 @@ class umap_mapping:
     ) -> np.ndarray:  # See Part 3.2 https://arxiv.org/pdf/1802.03426
         return (
             (2 * self.b)
-            / ((epsilon + np.linalg.norm(y_i - y_j) ** 2) * (1 + self.a * np.linalg.norm(y_i - y_j) ** (2 * self.b)))
+            / ((epsilon + np.linalg.norm(y_i - y_j) ** 2)
+                * (1 + self.a * np.linalg.norm(y_i - y_j) ** (2 * self.b)))
             * (1 - weight_ij)
             * (y_i - y_j)
         )
 
-    def find_ab_params(self, distance_matrix: sp.csr_matrix) -> Tuple[float, float]:
+    def find_ab_params(self, distance_matrix: sp.csr_matrix) -> tuple[float, float]:
         """
         Fit the parameters a and b for the UMAP attractive and repulsive forces by
         non-linear least squares fitting against the curve.
-        (see Definition 11 and equation (17) of appendix C of the UMAP paper https://arxiv.org/pdf/1802.03426)
+        (see Definition 11 and equation (17) of appendix C of the UMAP paper
+        https://arxiv.org/pdf/1802.03426)
 
         ---------
         Inputs:
-        distance_matrix: sparse matrix, shape (n_samples, n_samples) - distance matrix of the KNN graph
+        distance_matrix: sparse matrix, shape (n_samples, n_samples)
+            - distance matrix of the KNN graph
 
         Returns:
         a, b: float - parameters for the attractive and repulsive forces
@@ -182,7 +192,7 @@ class umap_mapping:
 
         eigvals, eigvecs = sp.linalg.eigsh(L, k=self.n_components + 1, which="SM")
 
-        return eigvecs[:, 1 : self.n_components + 1]
+        return eigvecs[:, 1: self.n_components + 1]
 
     def optimize(
         self,
@@ -217,7 +227,7 @@ class umap_mapping:
         indices = weights.indices
         data = weights.data
 
-        for epoch in range(n_epochs):
+        for _ in range(n_epochs):
             for i in range(n_samples):
                 yi = Y[i]
 
@@ -229,14 +239,12 @@ class umap_mapping:
                     j = indices[idx]
                     if j == i:
                         continue
-                    if only_transform:
-                        assert j != i  # to be removed once everything works
 
                     w_ij = data[idx]
 
                     if np.random.random() > w_ij:
                         continue
-                    if only_transform:
+                    if only_transform:      # Only transform given the original points
                         grad = self.attractive_force(yi, self.Y_train_[j], w_ij)
                     else:
                         grad = self.attractive_force(yi, Y[j], w_ij)
@@ -248,7 +256,6 @@ class umap_mapping:
                 for _ in range(n_neg):
                     if only_transform:
                         k = np.random.randint(0, n_train)
-                        # assert k != i  # sometimes true
                     else:
                         k = np.random.randint(0, n_samples)
                         if k == i:
@@ -276,7 +283,7 @@ class umap_mapping:
         weights: sp.csr_matrix,
         n_epochs: int = 200,
         learning_rate: float = 0.01,
-    ) -> Generator[Tuple[np.ndarray, int], None, None]:
+    ) -> Generator[tuple[np.ndarray, int]]:
         """
         Generator version of the optimize function to create animations.
         """
@@ -333,7 +340,7 @@ class umap_mapping:
         self,
         Y_init: np.ndarray,
         weights: sp.csr_matrix,
-        labels: Optional[np.ndarray] = None,
+        labels: np.ndarray | None = None,
         n_epochs: int = 200,
         learning_rate: float = 0.01,
     ) -> FuncAnimation:
@@ -360,26 +367,35 @@ class umap_mapping:
 
         ax.set_title("UMAP optimization - epoch 0")
 
-        def update(frame: Tuple[np.ndarray, int]):
+        last_state = {"Y": None}
+
+        def update(frame: tuple[np.ndarray, int]):
             Y_current, epoch = frame
             scat.set_offsets(Y_current)
             ax.set_title(f"UMAP optimization - epoch {epoch}")
+
+            # 🔥 stocke le dernier Y
+            last_state["Y"] = Y_current.copy()
+
             return (scat,)
 
-        generator = self.optimize_generator(Y=Y, weights=weights, n_epochs=n_epochs, learning_rate=learning_rate)
+        generator = self.optimize_generator(
+            Y=Y,
+            weights=weights,
+            n_epochs=n_epochs,
+            learning_rate=learning_rate
+        )
 
         anim = FuncAnimation(fig, update, frames=generator, interval=100, blit=False, repeat=False)
 
-        plt.show()
-
-        return anim
+        return last_state["Y"], anim
 
     def fit_transform(
         self,
         X: np.ndarray,
         n_epochs: int = 200,
         animation: bool = False,
-        labels: Optional[np.ndarray] = None,
+        labels: np.ndarray | None = None,
         show_spectral_embedding: bool = False,
         show_final_embedding: bool = False,
     ) -> np.ndarray:
@@ -417,7 +433,8 @@ class umap_mapping:
 
         # 6. optimisation
         if animation and self.n_components == 2:
-            self.animate_optimization(Y, weights, n_epochs=n_epochs, labels=labels)
+            Y, anim = self.animate_optimization(Y, weights, n_epochs=n_epochs, labels=labels)
+
         else:
             Y = self.optimize(Y, weights, n_epochs=n_epochs)
 
@@ -429,6 +446,9 @@ class umap_mapping:
         # 7. save data for transforming new points later
         self.X_train_ = X
         self.Y_train_ = Y
+
+        if animation and self.n_components == 2:
+            return Y, anim
 
         return Y
 
@@ -550,7 +570,12 @@ class umap_mapping:
             raise RuntimeError("Call .fit_transform() before .transform().")
 
         # 1. KNN
-        index, distances = exact_knn_all_points(X=X_new, k=self.n_neighbors, metric=self.metric, X_train=self.X_train_)
+        index, distances = exact_knn_all_points(
+            X=X_new,
+            k=self.n_neighbors,
+            metric=self.metric,
+            X_train=self.X_train_
+        )
 
         # 2. rho & sigma
         rho, sigma = self.rho_sigma(sp.csr_matrix(distances))
@@ -563,7 +588,11 @@ class umap_mapping:
 
         # 5. optimize
         Y_new_tuned = self.optimize(
-            Y=Y_new, weights=weights, n_epochs=n_epochs, learning_rate=learning_rate, only_transform=True
+            Y=Y_new,
+            weights=weights,
+            n_epochs=n_epochs,
+            learning_rate=learning_rate,
+            only_transform=True
         )
 
         return Y_new_tuned

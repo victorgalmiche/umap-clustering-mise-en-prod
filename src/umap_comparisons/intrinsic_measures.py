@@ -1,12 +1,12 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.datasets import fetch_openml
-from sklearn.manifold import trustworthiness, TSNE
-from sklearn.decomposition import PCA
-from sklearn.metrics import pairwise_distances
-from scipy.stats import spearmanr
 import umap
+from scipy.stats import spearmanr
+from sklearn.datasets import fetch_openml
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE, trustworthiness
+from sklearn.metrics import pairwise_distances
 
 
 def compute_continuity(X, X_embedded, n_neighbors=5):

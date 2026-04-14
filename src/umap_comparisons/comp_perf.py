@@ -1,9 +1,10 @@
 import time
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 import umap
+from matplotlib.lines import Line2D
 from sklearn.datasets import fetch_openml
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
@@ -356,7 +357,7 @@ for method in ["PCA", "UMAP", "t-SNE"]:
     else:
         print(f"{method:<10} {'N/A':<12} {'N/A':<15}")
 
-print("\nDimension Scaling (N = {:,}):".format(fixed_sample_size))
+print(f"\nDimension Scaling (N = {fixed_sample_size:,}):")
 print(f"{'Method':<10} {'Max Dim':<12} {'Time at Max Dim':<15}")
 print("-" * 70)
 for method in ["PCA", "UMAP", "t-SNE"]:

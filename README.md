@@ -108,7 +108,7 @@ uv run -m src.scripts.dim_reduction
 1. run a test 
 
 ```{bash}
-PYTHONPATH=src uv run pytest tests/test_knn.py::TestExactKnnAllPoints
+uv run pytest tests/test_knn.py::TestExactKnnAllPoints
 ```
 
 ## 📁 Datasets (Planned)

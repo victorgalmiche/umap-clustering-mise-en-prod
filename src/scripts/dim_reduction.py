@@ -1,17 +1,18 @@
 """ """
 
-import hydra
-import os
-import pandas as pd
-import numpy as np
-from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import load_iris
-from sklearn.manifold import trustworthiness
 import logging
+import os
 from pathlib import Path
 
-from src.umap_algo.umap_class import umap_mapping
+import hydra
+import numpy as np
+import pandas as pd
+from sklearn.datasets import load_iris
+from sklearn.manifold import trustworthiness
+from sklearn.preprocessing import StandardScaler
+
 from src.adapter.mlflow_tracker import ExperimentTracker, UmapStorage
+from src.umap_algo.umap_class import umap_mapping
 
 logger = logging.getLogger(Path(__file__).stem)
 

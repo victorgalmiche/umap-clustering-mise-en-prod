@@ -10,6 +10,7 @@ The resulting CSV contains:
 import polars as pl
 from sklearn.datasets import load_iris
 
+
 def iris_to_csv(csv_path: str = "tests/iris.csv") -> None:
     # 1️⃣ Load the dataset
     iris = load_iris()

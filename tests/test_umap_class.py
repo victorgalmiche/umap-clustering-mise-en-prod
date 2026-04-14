@@ -1,16 +1,17 @@
 import numpy as np
-import scipy.sparse as sp
 import pytest
+import scipy.sparse as sp
+
 from umap_algo.umap_class import umap_mapping
 
 
 def make_model(X_train_: np.ndarray = np.array([]), Y_train_: np.ndarray = np.array([]), **kwargs):
-    """ 
+    """
     Function that creates model umap using the default parameters.
-    The default parameters are not used to prevent tests 
+    The default parameters are not used to prevent tests
     from passing when changes to their values should cause them to fail.
 
-    Parameters 
+    Parameters
     -----------
     X_train_ : trained sets
     Y_train_ : trained embeddings
@@ -24,7 +25,7 @@ def make_model(X_train_: np.ndarray = np.array([]), Y_train_: np.ndarray = np.ar
     KNN_method: str = "exact",
     self.a = 1.9
     self.b = 0.79
-    
+
     """
     model = umap_mapping(**kwargs)
     model.Y_train_ = Y_train_
@@ -45,9 +46,9 @@ class TestInitializeWithBarycenter:
         """
         # GIVEN
         Y_train = np.array([
-            [0.0, 0.0],   
-            [2.0, 2.0],   
-            [10.0, 10.0]  
+            [0.0, 0.0],
+            [2.0, 2.0],
+            [10.0, 10.0]
         ])
         weights = sp.csr_matrix(np.array([
             [1.0, 3.0, 0.0],
@@ -93,17 +94,17 @@ class TestInitializeWithBarycenter:
         n_train, n_components, m = 10, 3, 4
         rng = np.random.default_rng(42)
         Y_train = rng.standard_normal((n_train, n_components))
- 
+
         W = np.zeros((m, n_train))
         for i in range(m):
             neighbors = rng.choice(n_train, size=2, replace=False)
             W[i, neighbors] = rng.uniform(0.1, 1.0, size=2)
         weights = sp.csr_matrix(W)
         model = make_model(Y_train_=Y_train)
- 
+
         # WHEN
         Y_new = model._initialize_with_barycenter(weights)
- 
+
         # THEN
         assert Y_new.shape == (m, n_components)
 
@@ -116,7 +117,7 @@ class TestCrossWeights:
         """
         GIVEN valid indices and distances between 2 new points and a training set of 5 points,
         WHEN  call _cross_weights,
-        THEN  all values in the weight matrix must lie in [0, 1] since they are fuzzy probabilities 
+        THEN  all values in the weight matrix must lie in [0, 1] since they are fuzzy probabilities
             derived from a decreasing exponential.
         """
         # GIVEN
@@ -124,19 +125,19 @@ class TestCrossWeights:
         X_train = rng.standard_normal((5, 3))
         Y_train = rng.standard_normal((5, 2))
         model = make_model(Y_train_=Y_train, X_train_=X_train)
- 
+
         indices = np.array([[0, 2], [1, 3]])
         distances = np.array([[0.5, 1.2], [0.3, 0.9]])
         rho = distances[:, 0]
         sigma = np.array([1.0, 1.0])
- 
+
         # WHEN
         W = model._cross_weights(indices, distances, rho, sigma)
- 
+
         # THEN
         assert W.data.min() >= 0.0
         assert W.data.max() <= 1.0
- 
+
     def test_output_shape_is_m_new_by_n_train(self):
         """
         GIVEN m=3 new points with k=2 neighbors each among n_train=8 points,
@@ -149,18 +150,18 @@ class TestCrossWeights:
         X_train = rng.standard_normal((n_train, 4))
         Y_train = rng.standard_normal((n_train, 2))
         model = make_model(Y_train_=Y_train, X_train_=X_train)
- 
+
         indices = rng.integers(0, n_train, size=(m, k))
         distances = rng.uniform(0.1, 2.0, size=(m, k))
         rho = distances[:, 0]
         sigma = np.ones(m)
- 
+
         # WHEN
         W = model._cross_weights(indices, distances, rho, sigma)
- 
+
         # THEN
         assert W.shape == (m, n_train)
-    
+
     def test_cross_weights_exact_values(self):
         """
         GIVEN 2 new points with k=2 neighbors each, matrix of distances, rho and sigma
@@ -207,13 +208,13 @@ class TestCrossWeights:
             for c in range(4):
                 if (r, c) not in expected:
                     assert W_dense[r, c] == 0.0, f"W[{r},{c}] should be nul"
- 
+
 
 # ── TestTransform ──────────────────────────────────────────────────────────────
- 
+
 
 class TestTransform:
- 
+
     def test_raises_if_fit_transform_not_called(self):
         """
         GIVEN instantiate umap_mapping without fit_transform,
@@ -222,16 +223,16 @@ class TestTransform:
         """
         # GIVEN
         model = umap_mapping()
- 
+
         # WHEN / THEN
         with pytest.raises(RuntimeError, match="fit_transform"):
             model.transform(np.random.randn(3, 4))
-    
+
     def test_iris_dataset(self, iris_split):
         """
         GIVEN the iris dataset split into train/test set
         WHEN call .transform
-        THEN the ouptut should have the shape of X_test projected onto 
+        THEN the ouptut should have the shape of X_test projected onto
             a space of model.n_components dimensions
         """
         # GIVEN
@@ -317,11 +318,11 @@ class TestAttractiveForce:
         """
         # GIVEN
         model = make_model()
-        
+
         # WHEN
         grad1 = model.attractive_force(y_i=y_i, y_j=y_j, weight_ij=w1)
         grad2 = model.attractive_force(y_i=y_i, y_j=y_j, weight_ij=w2)
-        
+
         # THEN
         np.testing.assert_allclose(grad2, grad1 * (w2 / w1), rtol=1e-6)
 
@@ -357,10 +358,10 @@ class TestRepulsiveForce:
         """
         # GIVEN
         model = make_model()
-        
+
         # WHEN
         grad = model.repulsive_force(y_i=y_i, y_j=y_j, weight_ij=0.0)
-        
+
         # THEN
         if expected_direction == "right":
             assert grad[0] > 0.0, f"Expected positive x gradient, got {grad[0]}"
@@ -371,9 +372,11 @@ class TestRepulsiveForce:
         elif expected_direction == "down":
             assert grad[1] < 0.0, f"Expected negative y gradient, got {grad[1]}"
         elif expected_direction == "top-right":
-            assert grad[0] > 0.0 and grad[1] > 0.0, f"Expected positive x and y gradients, got {grad}"
+            assert grad[0] > 0.0 and grad[1] > 0.0, \
+                ValueError(f"Expected positive x and y gradients, got {grad}")
         elif expected_direction == "bottom-left":
-            assert grad[0] < 0.0 and grad[1] < 0.0, f"Expected negative x and y gradients, got {grad}"
+            assert grad[0] < 0.0 and grad[1] < 0.0, \
+                ValueError(f"Expected negative x and y gradients, got {grad}")
 
     def test_weight_one_gives_zero_gradient(self):
         """
@@ -438,13 +441,13 @@ class TestRepulsiveForce:
         """
         # GIVEN
         model = make_model()
-        
+
         # WHEN
         norms = [
             np.linalg.norm(model.repulsive_force(y_i, y_j, weight_ij=0.0))
             for y_i in positions
         ]
-        
+
         # THEN
         assert norms[0] > norms[1] > norms[2], (
             f"Expected decreasing norms as distance increases, "
@@ -518,7 +521,7 @@ class TestSpectralEmbedding:
         rng = np.random.default_rng(0)
         n = 8
         A = rng.uniform(0.1, 1.0, (n, n))
-        W = sp.csr_matrix((A + A.T) / 2)   
+        W = sp.csr_matrix((A + A.T) / 2)
 
         # WHEN
         Y = model.spectral_embedding(W)
@@ -569,11 +572,11 @@ class TestSpectralEmbedding:
         # Then
         # orthonomral columns
         np.testing.assert_almost_equal(Y.T @ Y, np.eye(2), decimal=6)
-        
+
         # each column should be orthogonal to (1,1,1,1) whose eigen value is 0
         ones = np.ones(4)
         np.testing.assert_almost_equal(Y.T @ ones, np.zeros(2), decimal=6)
-        
+
         # each column is an eigen vector of the normalized symetrical laplacian of the graph
         #  associated with the eigenvalue 4/3
         deg = np.array(np.sum(W_dense, axis=1)).flatten()  # shape (4,)

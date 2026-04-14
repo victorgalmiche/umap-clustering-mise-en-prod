@@ -1,11 +1,11 @@
 import numpy as np
 import pandas as pd
+import umap
+from sklearn.cluster import DBSCAN, KMeans
 from sklearn.datasets import fetch_openml
-from sklearn.cluster import KMeans, DBSCAN
-from sklearn.metrics import adjusted_rand_score, silhouette_score
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
-import umap
+from sklearn.metrics import adjusted_rand_score, silhouette_score
 from sklearn.preprocessing import StandardScaler
 
 # Configuration

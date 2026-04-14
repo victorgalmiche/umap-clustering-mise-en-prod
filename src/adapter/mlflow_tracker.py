@@ -1,14 +1,14 @@
+import logging
 import os
-import mlflow
+from contextlib import contextmanager
 from pathlib import Path
+
+import mlflow
 import mlflow.models
 import mlflow.pyfunc
-from typing import Dict, Union
-from contextlib import contextmanager
-import logging
 import numpy as np
-import s3fs
 import pandas as pd
+import s3fs
 
 logger = logging.getLogger(Path(__file__).stem)
 
@@ -49,12 +49,12 @@ class ExperimentTracker:
 
     def log_metrics(
         self,
-        metrics: Dict[str, Union[int, float, None]],
+        metrics: dict[str, int | float | None],
     ) -> None:
         logger.info(f"Logging metrics {metrics}")
         mlflow.log_metrics(metrics=metrics)
 
-    def log_params(self, params: Dict[str, Union[str, int, float, None]]) -> None:
+    def log_params(self, params: dict[str, str | int | float | None]) -> None:
         """Log multiple parameters at once"""
         logger.info(f"Logging params: {params}")
         mlflow.log_params(params)
