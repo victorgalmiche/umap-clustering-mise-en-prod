@@ -2,6 +2,7 @@ import logging
 import os
 from contextlib import contextmanager
 from pathlib import Path
+from dotenv import load_dotenv
 
 import mlflow
 import mlflow.models
@@ -10,31 +11,44 @@ import numpy as np
 import tempfile
 
 logger = logging.getLogger(Path(__file__).stem)
+load_dotenv(override=True)
 
 
 class ExperimentTracker:
     def __init__(
         self, experiment_name: str, run_name: str | None = None, run_tags: dict[str, str] | None = None
     ) -> None:
+        
+        # 1. Récupération de l'URI depuis l'environnement
+        mlflow_server = os.getenv("MLFLOW_TRACKING_URI")
+        if not mlflow_server:
+            raise ValueError("MLFLOW_TRACKING_URI n'est pas définie dans l'environnement.")
+        
+        self.tracking_uri = mlflow_server
+        mlflow.set_tracking_uri(self.tracking_uri)
+
+        # Les variables MLFLOW_TRACKING_USERNAME et MLFLOW_TRACKING_PASSWORD 
+        # sont lues automatiquement par la librairie mlflow lors des requêtes.
 
         if mlflow.active_run() is not None:
             mlflow.end_run()
 
-        self.experiment_name = f"/experiments/{experiment_name}"
-        self.experiment_id = mlflow.set_experiment(experiment_name).experiment_id
+        # 2. Configuration de l'expérience
+        # Sur un serveur partagé, il est courant d'utiliser des chemins comme /users/prenom/nom_experience
+        self.experiment_name = experiment_name 
+        
+        try:
+            exp = mlflow.set_experiment(self.experiment_name)
+            self.experiment_id = exp.experiment_id
+        except Exception as e:
+            logger.error(f"Erreur lors de la connexion à MLflow: {e}")
+            raise
+
         self.run_tags = run_tags
         self.run_name = run_name
         self.current_run_id = None
-        mlflow_server = os.getenv("MLFLOW_TRACKING_URI")
-        self.tracking_uri = mlflow_server
 
-        mlflow.set_tracking_uri(mlflow_server)
-
-        logger.info(
-            f"Set up MLflow with experiment_name: {self.experiment_name}, "
-            f"experiment_id: {self.experiment_id}, "
-            f"saving experiment in {self.tracking_uri}"
-        )
+        logger.info(f"Connecté au serveur MLflow distant: {self.tracking_uri}")
 
     @contextmanager
     def run(self):

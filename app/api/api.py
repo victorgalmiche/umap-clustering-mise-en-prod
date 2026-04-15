@@ -1,117 +1,109 @@
-"""A simple API to expose our implementation of UMAP"""
+"""
+UMAP Service API
+Exposes dimension reduction capabilities using custom UMAP implementations
+and MLflow experiment tracking.
+"""
 
 import io
+import os
 import secrets
-from fastapi import FastAPI, File, UploadFile, HTTPException, Form
+import logging
+from typing import Optional
+from pathlib import Path
+
 import polars as pl
 import umap
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Header
 from sklearn.preprocessing import StandardScaler
-import logging
-from pathlib import Path
-import mlflow
-import os
 
 from src.umap_algo.umap_class import umap_mapping
 from src.adapter.mlflow_tracker import ExperimentTracker, UmapStorage
 
+# Logger configuration
 logger = logging.getLogger(Path(__file__).stem)
 
-# In-memory model cache: access_key -> (model, scaler, X_train, Y_train)
+# In-memory model cache: access_key -> (model, scaler, dataset_standardized, Y)
 model_cache = {}
 
-# MLflow tracking
-mlflow_server = os.getenv("MLFLOW_TRACKING_URI")
-if mlflow_server:
-    mlflow.set_tracking_uri(mlflow_server)
+# API Metadata for Swagger UI (/docs)
+tags_metadata = [
+    {"name": "General", "description": "System health and welcome information."},
+    {"name": "Model Management",
+     "description": "Training and projection operations using secure access keys."},
+    {"name": "Legacy", "description": "One-shot UMAP projections without persistence."},
+]
 
 app = FastAPI(
-    title="UMAP API",
-    description="Dimension reduction with UMAP algorithm"
+    title="UMAP Management API",
+    description="""
+    This API provides high-performance dimension reduction services.
+
+    ### Workflow:
+    1. **Train** a model by uploading a CSV. Receive a secure `access_key`.
+    2. **Transform** new data using the manifold learned during training via your `access_key`.
+    3. **Track** results automatically in MLflow.
+    """,
+    version="0.2.0",
+    openapi_tags=tags_metadata
 )
 
 
-@app.get("/", tags=["Welcome"])
-def show_welcome_page():
+def get_experiment_path(base_name: str, client_source: Optional[str] = None) -> str:
     """
-    Show welcome page with model name and version.
+    Generates the MLflow experiment path based on the environment and client source.
+    Defaults to the APP_ENV variable or 'dev'.
     """
+    env = client_source if client_source else os.getenv("APP_ENV", "dev")
+    return f"/{env}/{base_name}"
 
+
+@app.get("/", tags=["General"], summary="Welcome endpoint")
+def show_welcome_page():
+    """Returns basic API metadata."""
     return {
-        "Message": "UMAP API",
-        "Model_name": "UMAP",
-        "Model_version": "0.2",
+        "api": "UMAP API",
+        "version": "0.2.0",
+        "status": "ready"
     }
 
 
 @app.post(
     "/train",
-    summary="Train a UMAP model and get a secure access key",
+    summary="Train a UMAP model",
     tags=["Model Management"]
 )
 async def train_model(
     file: UploadFile = File(...),
-    n_neighbors: int = Form(15),
-    n_components: int = Form(2),
-    min_dist: float = Form(0.1),
-    knn_metric: str = Form("euclidean"),
-    knn_method: str = Form("approx"),
-    n_epochs: int = Form(200),
+    n_neighbors: int = Form(15, description="Number of neighbors for KNN"),
+    n_components: int = Form(2, description="Target dimension"),
+    min_dist: float = Form(0.1, description="Minimum distance in the embedding"),
+    knn_metric: str = Form("euclidean", description="Distance metric"),
+    knn_method: str = Form("approx", description="KNN search method: 'exact' or 'approx'"),
+    n_epochs: int = Form(200, description="Optimization iterations"),
+    x_client_source: Optional[str] = Header(None, description="Identify the caller (e.g., 'streamlit')")
 ):
     """
-    Train a UMAP model on provided CSV and return a secure access key.
-    
-    The access key is a random token that grants access to transform data
-    without exposing the underlying model or training data to other users.
-
-    Parameters
-    ----------
-    file : UploadFile
-        CSV file for training
-    n_neighbors : int
-        Number of neighbors for KNN (default: 15)
-    n_components : int
-        Output embedding dimension (default: 2)
-    min_dist : float
-        Minimum distance in low-dimensional space (default: 0.1)
-    knn_metric : str
-        Distance metric: 'euclidean', 'manhattan', etc. (default: 'euclidean')
-    knn_method : str
-        KNN method: 'exact' or 'approx' (default: 'approx')
-    n_epochs : int
-        Optimization epochs (default: 200)
-
-    Returns
-    -------
-    dict
-        Contains:
-        - access_key: Secure random token for /transform
-        - embedding_shape: Shape of training embedding
-        - n_samples: Number of training samples
-        - message: Usage instructions
+    Fits a UMAP model on the provided CSV data.
+    Generates a secure access key required for subsequent transformations.
     """
-    # Validate file
     if not file.filename.lower().endswith(".csv"):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Only CSV files accepted. Received: {file.filename}",
-        )
+        raise HTTPException(status_code=400, detail="Only CSV files are accepted.")
 
-    # Read data
+    # Data ingestion
     content = await file.read()
-    buffer = io.BytesIO(content)
-    logger.info("Reading training data...")
-    df = pl.read_csv(buffer)
+    df = pl.read_csv(io.BytesIO(content))
+    n_samples, n_features = df.shape
 
-    n_samples = df.shape[0]
-    n_features = df.shape[1]
+    # MLflow setup
+    exp_path = get_experiment_path("umap-training", x_client_source)
+    tracker = ExperimentTracker(
+        experiment_name=exp_path,
+        run_name=f"train-{file.filename}",
+        run_tags={"env": os.getenv("APP_ENV", "dev"), "source": x_client_source or "api"}
+    )
 
-    # Start MLflow run
-    experiment_name = "umap-training"
-    mlflow.set_experiment(experiment_name)
-    
-    with mlflow.start_run():
-        # Log parameters
-        mlflow.log_params({
+    with tracker.run():
+        tracker.log_params({
             "n_neighbors": n_neighbors,
             "n_components": n_components,
             "min_dist": min_dist,
@@ -122,13 +114,11 @@ async def train_model(
             "n_features": n_features,
         })
 
-        # Preprocess
-        logger.info("Preprocessing data...")
+        # Preprocessing
         scaler = StandardScaler()
         dataset_standardized = scaler.fit_transform(df.to_pandas())
 
-        # Train model
-        logger.info(f"Training UMAP on {n_samples} samples...")
+        # Training logic
         model = umap_mapping(
             n_neighbors=n_neighbors,
             n_components=n_components,
@@ -138,132 +128,90 @@ async def train_model(
         )
 
         try:
-            result = model.fit_transform(dataset_standardized, n_epochs=n_epochs)
-
-            mlflow.log_metric("training_success", 1)
+            Y = model.fit_transform(dataset_standardized, n_epochs=n_epochs)
+            tracker.log_metrics({"training_success": 1})
         except Exception as e:
-            logger.warning(f"Custom UMAP failed: {e}. Using umap-learn...")
+            logger.warning(f"Custom UMAP failed: {e}. Falling back to umap-learn.")
             model = umap.UMAP(
-                n_neighbors=n_neighbors,
-                n_components=n_components,
-                min_dist=min_dist,
-                metric=knn_metric
+                n_neighbors=n_neighbors, n_components=n_components, 
+                min_dist=min_dist, metric=knn_metric
             )
             Y = model.fit_transform(dataset_standardized)
-            mlflow.log_metric("training_success", 0)
-            mlflow.log_param("fallback_to_umap_learn", True)
+            tracker.log_metrics({"training_success": 0})
+            tracker.log_params({"fallback": True})
 
-        # Log model with MLflow
-        pyfunc_model = UmapStorage(model)
-        mlflow.pyfunc.log_model(
+        # MLflow persistence
+        tracker.log_pyfunc_model(
+            pyfunc_model=UmapStorage(model),
             artifact_path="umap_model",
-            python_model=pyfunc_model,
-            artifacts={
-                "X_train": None,  # Will be saved below
-                "Y_train": None,
-            },
+            registered_model_name="umap_model_registry",
+            X_train=dataset_standardized,
+            Y_train=Y
         )
 
-        # Log metrics
-        mlflow.log_metrics({
+        tracker.log_metrics({
             "output_shape_0": Y.shape[0],
             "output_shape_1": Y.shape[1],
         })
 
-        # Generate secure access key
+        # Caching and access control
         access_key = secrets.token_urlsafe(32)
-        
-        # Cache model
         model_cache[access_key] = (model, scaler, dataset_standardized, Y)
-        logger.info(f"Model trained and cached with access key (secure)")
 
     return {
         "access_key": access_key,
-        "message": "Use this key to transform new data with /transform endpoint",
         "embedding_shape": Y.shape,
         "n_samples": n_samples,
         "n_features": n_features,
+        "message": "Model cached. Use the access_key for the /transform endpoint."
     }
 
 
 @app.post(
     "/transform",
-    summary="Transform new data using a trained model",
+    summary="Transform new data",
     tags=["Model Management"]
 )
 async def transform_data(
-    access_key: str = Form(...),
+    access_key: str = Form(..., description="The key provided by the /train endpoint"),
     file: UploadFile = File(...),
-    n_epochs: int = Form(100),
+    n_epochs: int = Form(100, description="Optimization epochs for the projection"),
+    x_client_source: Optional[str] = Header(None)
 ):
     """
-    Transform new data using a previously trained UMAP model.
-    
-    Uses the secure access key from /train endpoint to identify the model.
-    Only the person with the access key can transform data with that model.
-
-    Parameters
-    ----------
-    access_key : str
-        Secure token received from /train endpoint
-    file : UploadFile
-        CSV file with new data
-    n_epochs : int
-        Optimization epochs for refining new embeddings (default: 100)
-
-    Returns
-    -------
-    dict
-        Contains embedding and metadata
+    Projects new data points onto the manifold learned by a previously trained model.
     """
-    # Validate access_key
     if access_key not in model_cache:
-        raise HTTPException(
-            status_code=403,
-            detail="Invalid access_key. Use the key returned from /train endpoint.",
-        )
+        raise HTTPException(status_code=403, detail="Invalid access_key.")
 
-    # Validate file
     if not file.filename.lower().endswith(".csv"):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Only CSV files accepted. Received: {file.filename}",
-        )
+        raise HTTPException(status_code=400, detail="Only CSV files are accepted.")
 
-    # Retrieve cached model and scaler
-    model, scaler, X_train_scaled, Y_train = model_cache[access_key]
+    # Retrieve objects from cache
+    model, scaler, _, _ = model_cache[access_key]
 
-    # Read new data
+    # Processing
     content = await file.read()
-    buffer = io.BytesIO(content)
-    logger.info("Reading new data...")
-    df = pl.read_csv(buffer)
-
-    n_samples_new = df.shape[0]
-
-    # Preprocess new data using the same scaler
-    logger.info("Preprocessing new data...")
+    df = pl.read_csv(io.BytesIO(content))
     X_new_scaled = scaler.transform(df.to_pandas())
 
-    # Start MLflow run for transform
-    with mlflow.start_run():
-        mlflow.log_params({
-            "n_epochs": n_epochs,
-            "n_samples_new": n_samples_new,
-            "operation": "transform",
-        })
+    exp_path = get_experiment_path("umap-transform", x_client_source)
+    tracker = ExperimentTracker(
+        experiment_name=exp_path,
+        run_name="transform-execution",
+        run_tags={"env": os.getenv("APP_ENV", "dev")}
+    )
 
-        # Transform using trained model
-        logger.info(f"Transforming {n_samples_new} new samples...")
+    with tracker.run():
+        tracker.log_params({"n_epochs": n_epochs, "n_samples": df.shape[0]})
         try:
             Y_new = model.transform(X_new_scaled, n_epochs=n_epochs)
-            mlflow.log_metric("transform_success", 1)
+            tracker.log_metrics({"transform_success": 1})
         except Exception as e:
-            logger.error(f"Transform failed: {e}")
-            mlflow.log_metric("transform_success", 0)
-            raise HTTPException(status_code=500, detail=str(e))
+            tracker.log_metrics({"transform_success": 0})
+            raise HTTPException(status_code=500, detail=f"Transformation failed: {str(e)}")
 
-        mlflow.log_metrics({
+        tracker.log_metrics({
             "output_shape_0": Y_new.shape[0],
             "output_shape_1": Y_new.shape[1],
         })
@@ -271,14 +219,13 @@ async def transform_data(
     return {
         "embedding": Y_new.tolist(),
         "embedding_shape": Y_new.shape,
-        "n_samples": n_samples_new,
+        "n_samples": df.shape[0],
     }
 
 
 @app.post(
     "/umap",
-    summary="Return the UMAP projection of an uploaded CSV file (legacy)",
-    response_description="a string representation of the UMAP projection",
+    summary="One-shot UMAP projection",
     tags=["Legacy"]
 )
 async def apply_umap(
@@ -288,71 +235,52 @@ async def apply_umap(
     min_dist: float = Form(0.1),
     knn_metric: str = Form("euclidean"),
     knn_method: str = Form("approx"),
+    x_client_source: Optional[str] = Header(None)
 ):
     """
-    Accept a CSV file via multipart/form-data and return the UMAP projection.
-    
-    **Legacy endpoint** - For new usage, use /train and /transform instead for better performance and privacy.
-
-    Parameters
-    ----------
-    file : UploadFile
-        The CSV file uploaded by the client.
-
-    Returns
-    -------
-    dict
-        JSON object with embedding
+    Standard Fit-Transform operation. 
+    Warning: This endpoint does not support manifold persistence.
     """
-    # Basic file‑type check
     if not file.filename.lower().endswith(".csv"):
-        raise HTTPException(
-            status_code=400,
-            detail="Only CSV files are accepted. "
-            f"Received: {file.filename}",
-        )
+        raise HTTPException(status_code=400, detail="Only CSV files are accepted.")
 
-    # Read the entire file into memory
     content = await file.read()
-    buffer = io.BytesIO(content)
+    df = pl.read_csv(io.BytesIO(content))
 
-    logger.info("Reading data ...")
-    df = pl.read_csv(buffer)
-
-    # Get parameters
-    logger.info("Get model parameters ...")
-    scaler = StandardScaler()
-    model = umap_mapping(
-        n_neighbors=n_neighbors,
-        n_components=n_components,
-        min_dist=min_dist,
-        KNN_metric=knn_metric,
-        KNN_method=knn_method,
+    exp_path = get_experiment_path("umap-legacy", x_client_source)
+    tracker = ExperimentTracker(
+        experiment_name=exp_path,
+        run_name=f"legacy-run-{file.filename}",
+        run_tags={"mode": "legacy", "env": os.getenv("APP_ENV", "dev")}
     )
 
-    logger.info("Fitting model...")
-    dataset_standardized = scaler.fit_transform(df.to_pandas())
-    try:
-        result = model.fit_transform(dataset_standardized)
-        # Handle both return formats: Y or (Y, anim)
-        if isinstance(result, tuple):
-            dataset_transformed = result[0]
-        else:
-            dataset_transformed = result
+    with tracker.run():
+        tracker.log_params({"n_neighbors": n_neighbors, "n_samples": df.shape[0]})
 
-    except Exception as e:
-        logger.warning(f"Custom UMAP failed: {e}. Falling back to umap-learn...")
-        model = umap.UMAP(
-            n_neighbors=n_neighbors,
-            n_components=n_components,
-            min_dist=min_dist,
-            metric=knn_metric
+        scaler = StandardScaler()
+        dataset_standardized = scaler.fit_transform(df.to_pandas())
+
+        model = umap_mapping(
+            n_neighbors=n_neighbors, n_components=n_components,
+            min_dist=min_dist, KNN_metric=knn_metric, KNN_method=knn_method,
         )
 
-        dataset_transformed = model.fit_transform(dataset_standardized)
+        try:
+            result = model.fit_transform(dataset_standardized)
+            dataset_transformed = result[0] if isinstance(result, tuple) else result
+            tracker.log_metrics({"success": 1})
+        except Exception as e:
+            logger.warning(f"Custom fallback: {e}")
+            model = umap.UMAP(n_neighbors=n_neighbors, n_components=n_components, min_dist=min_dist)
+            dataset_transformed = model.fit_transform(dataset_standardized)
+            tracker.log_metrics({"success": 0, "fallback": 1})
 
-    # Return the transformed dataset
-    logger.info("All done, returning transformed data")
-    repr_json = {"embedding": dataset_transformed.tolist()}
+        tracker.log_pyfunc_model(
+            pyfunc_model=UmapStorage(model),
+            artifact_path="legacy_model",
+            registered_model_name="umap_legacy_models",
+            X_train=dataset_standardized,
+            Y_train=dataset_transformed
+        )
 
-    return repr_json
+    return {"embedding": dataset_transformed.tolist()}
