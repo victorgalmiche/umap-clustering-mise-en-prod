@@ -7,7 +7,7 @@ BASE_URL = "http://127.0.0.1:8000"
 os.environ["APP_ENV"] = "test"
 
 
-def test_workflow_complete():
+def test_workflow_complete(start_api):
     """
     Test complete life cycle : Train -> Transform
     """
@@ -51,7 +51,7 @@ def test_workflow_complete():
     assert embedding.shape == (10, 2)
 
 
-def test_legacy_umap():
+def test_legacy_umap(start_api):
     """
     Test the endpoint legacy /umap (all-in-one)
     """
@@ -68,7 +68,7 @@ def test_legacy_umap():
     assert embedding.shape == (20, 2)
 
 
-def test_error_handling():
+def test_error_handling(start_api):
     """
     Vérifie que l'API renvoie bien une erreur 403 pour une mauvaise clé
     """
