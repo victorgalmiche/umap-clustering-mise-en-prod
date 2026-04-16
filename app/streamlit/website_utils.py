@@ -11,13 +11,17 @@ def run_umap_api(
     min_dist: float = 0.1,
     knn_metric: str = "euclidean",
     knn_method: str = "approx",
-    n_epochs: int = 200
+    n_epochs: int = 200,
+    mode: str = "umap"
 ) -> np.ndarray:
     """
     Call the API to run umap.
+    mode: umap or train
     """
-    # url = "http://0.0.0.0:8000/umap"
-    url = "https://umap-api-mmvs.lab.sspcloud.fr/umap"
+    assert mode in ["umap", "train"], ValueError("Invalid mode")
+
+    # url = f"http://0.0.0.0:8000/{mode}"
+    url = f"https://umap-api-mmvs.lab.sspcloud.fr/{mode}"
 
     csv_buffer = df.to_csv(index=False).encode()
 
@@ -41,7 +45,10 @@ def run_umap_api(
 
     data = response.json()
 
-    return np.array(data["embedding"])
+    if mode == "umap":
+        return np.array(data["embedding"])
+    if mode == "train":
+        return np.array(data["embedding"]), data["access_key"]
 
 
 def run_kmeans(X, n_clusters):
