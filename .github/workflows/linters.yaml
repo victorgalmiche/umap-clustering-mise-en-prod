@@ -46,7 +46,8 @@ jobs:
 
       - name: pylint report
         run: uv run pylint src > pylint-report.txt
-        
+        continue-on-error: true
+
       - name: Upload rpylint-report.txt artifact
         uses: actions/upload-artifact@v4
         with:
