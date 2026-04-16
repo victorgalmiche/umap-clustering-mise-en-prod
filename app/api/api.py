@@ -203,7 +203,8 @@ async def train_model(
         "embedding_shape": Y.shape,
         "n_samples": n_samples,
         "n_features": n_features,
-        "message": "Model cached. Use the access_key for the /transform endpoint."
+        "message": "Model cached. Use the access_key for the /transform endpoint.",
+        "embedding": Y.tolist()
     }
 
 
