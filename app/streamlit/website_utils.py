@@ -10,7 +10,8 @@ def run_umap_api(
     n_components: int = 2,
     min_dist: float = 0.1,
     knn_metric: str = "euclidean",
-    knn_method: str = "approx"
+    knn_method: str = "approx",
+    n_epochs: int = 200
 ) -> np.ndarray:
     """
     Call the API to run umap.
@@ -30,6 +31,7 @@ def run_umap_api(
         "min_dist": min_dist,
         "knn_metric": knn_metric,
         "knn_method": knn_method,
+        "x_client_source": "streamlit"
     }
 
     response = requests.post(url, files=files, data=data)

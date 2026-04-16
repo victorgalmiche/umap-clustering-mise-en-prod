@@ -364,7 +364,7 @@ class umap_mapping:
 
         ax.set_title("UMAP optimization - epoch 0")
 
-        last_state = {"Y": None}
+        last_state = {"Y": Y}
 
         def update(frame: tuple[np.ndarray, int]):
             Y_current, epoch = frame
@@ -376,9 +376,21 @@ class umap_mapping:
 
             return (scat,)
 
-        generator = self.optimize_generator(Y=Y, weights=weights, n_epochs=n_epochs, learning_rate=learning_rate)
+        generator = self.optimize_generator(
+            Y=Y,
+            weights=weights,
+            n_epochs=n_epochs,
+            learning_rate=learning_rate
+        )
 
-        anim = FuncAnimation(fig, update, frames=generator, interval=100, blit=False, repeat=False)
+        anim = FuncAnimation(
+            fig,
+            update,
+            frames=generator,
+            interval=100,
+            blit=False,
+            repeat=False
+        )
 
         return last_state["Y"], anim
 
