@@ -1,6 +1,8 @@
 import requests
+import streamlit as st
 import numpy as np
 import pandas as pd
+from sklearn.datasets import load_iris, fetch_covtype, fetch_openml
 from sklearn.cluster import KMeans, HDBSCAN
 
 
@@ -48,3 +50,42 @@ def run_kmeans(X, n_clusters):
 
 def run_hdbscan(X, min_cluster_size):
     return HDBSCAN(min_cluster_size).fit(X).labels_
+
+
+@st.cache_data
+def load_iris_data():
+    return load_iris(as_frame=True)["data"]
+
+
+@st.cache_data
+def load_covtype_data(n_points=500):
+    covtype = fetch_covtype()
+    X = pd.DataFrame(covtype.data)
+    return X.iloc[:n_points]
+
+
+@st.cache_data
+def load_fashion_mnist_data(n_points=500, selected_classes=(0, 1, 2)):
+    fashion = fetch_openml(name="Fashion-MNIST", version=1, parser="auto")
+    X = fashion.data
+    y = fashion.target.astype(int)
+    mask = y.isin(selected_classes)
+    return X[mask].iloc[:n_points]
+
+
+@st.cache_data
+def load_miniboone_data(n_points=500):
+    miniboone = fetch_openml(data_id=41150, as_frame=True, parser="auto")
+    return miniboone.data.iloc[:n_points]
+
+
+DATASET_LOADERS = {
+    "Iris": load_iris_data,
+    "Covtype": load_covtype_data,
+    "Fashion-MNIST": load_fashion_mnist_data,
+    "MiniBooNE": load_miniboone_data,
+}
+
+
+def load_dataset(name: str):
+    return DATASET_LOADERS[name]()

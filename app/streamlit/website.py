@@ -2,11 +2,10 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-from sklearn.datasets import load_iris
 
-# Placeholder imports for your custom implementations
 from src.umap_algo.umap_class import umap_mapping
-from app.streamlit.website_utils import run_umap_api, run_kmeans, run_hdbscan
+from app.streamlit.website_utils import run_umap_api, run_kmeans, run_hdbscan, load_dataset, DATASET_LOADERS
+
 
 st.set_page_config(
     page_title="UMAP + Clustering App",
@@ -23,19 +22,16 @@ st.sidebar.header("Data")
 
 data_file = st.sidebar.file_uploader("Upload data to embed (CSV)", type=["csv"])
 # TODO: add target
-# TODO: add parquet
-
-
-@st.cache_data
-def load_default_data():
-    return load_iris(as_frame=True)["data"]
-
 
 if data_file is not None:
     data_to_embed = pd.read_csv(data_file)
 else:
-    st.sidebar.info("Using default dataset")
-    data_to_embed = load_default_data()
+    dataset_choice = st.sidebar.selectbox(
+        "Choose a dataset",
+        list(DATASET_LOADERS.keys()),
+        index=0,
+    )
+    data_to_embed = load_dataset(dataset_choice)
 
 st.write("### Dataset preview")
 st.dataframe(data_to_embed.head())
