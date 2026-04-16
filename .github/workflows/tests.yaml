@@ -4,7 +4,7 @@ on:
   push:
 
 jobs:
-  test:
+  tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -32,10 +32,12 @@ jobs:
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
           APP_ENV: test
         run: uv run pytest tests/
-
+      
       - name: Upload recording.log artifact
         uses: actions/upload-artifact@v4
         with:
           name: log-file
           path: recording.log
           if-no-files-found: warn
+
+      

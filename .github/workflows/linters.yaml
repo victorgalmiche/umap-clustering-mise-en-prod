@@ -45,12 +45,13 @@ jobs:
           git push origin HEAD:${{ github.head_ref }}
 
       - name: pylint report
-        run: uv run pylint src
-        continue-on-error: true
-
-      - name: Upload recording.log artifact
+        run: uv run pylint src > pylint-report.txt
+        
+      - name: Upload rpylint-report.txt artifact
         uses: actions/upload-artifact@v4
         with:
-          name: log-file
-          path: recording.log
+          name: pylint-report-file
+          path: pylint-report.txt
           if-no-files-found: warn
+
+      
