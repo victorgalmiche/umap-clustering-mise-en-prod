@@ -376,21 +376,9 @@ class umap_mapping:
 
             return (scat,)
 
-        generator = self.optimize_generator(
-            Y=Y,
-            weights=weights,
-            n_epochs=n_epochs,
-            learning_rate=learning_rate
-        )
+        generator = self.optimize_generator(Y=Y, weights=weights, n_epochs=n_epochs, learning_rate=learning_rate)
 
-        anim = FuncAnimation(
-            fig,
-            update,
-            frames=generator,
-            interval=100,
-            blit=False,
-            repeat=False
-        )
+        anim = FuncAnimation(fig, update, frames=generator, interval=100, blit=False, repeat=False)
 
         return last_state["Y"], anim
 
