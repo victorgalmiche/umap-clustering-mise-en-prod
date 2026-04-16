@@ -1,7 +1,5 @@
-experiment_name: dim_reduction
+experiment_name: /scripts/dim_reduction
 run_name: "test job"
 dataset_name: iris
-path_X_train: "s3://projet-mise-en-prod-umap/model/data/${mlflow.dataset_name}/X_train.parquet"
-path_Y_train: "s3://projet-mise-en-prod-umap/model/data/${mlflow.dataset_name}/Y_train.parquet"
 registered_model_name: "umap-model"
 artifact_path: "umap-model"

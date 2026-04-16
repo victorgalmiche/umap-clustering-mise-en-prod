@@ -42,4 +42,4 @@ docstring-code-line-length = "dynamic"
 
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src", "app"]

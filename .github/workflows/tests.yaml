@@ -49,7 +49,13 @@ jobs:
         continue-on-error: true
 
       - name: Run tests
-        run: PYTHONPATH=src uv run pytest tests/ 
+        # C'est ici que l'on injecte les secrets pour l'API
+        env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+          APP_ENV: test
+        run: uv run pytest tests/
 
       - name: Upload recording.log artifact
         uses: actions/upload-artifact@v4

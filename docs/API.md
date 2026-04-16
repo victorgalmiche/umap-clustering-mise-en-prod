@@ -1,36 +1,75 @@
-# UMAP API
+# UMAP Management API
 
-A FastAPI application that uses the UMAP algorithm to return a low-dimension projection of the dataset provided as a CSV file.
+A production-ready FastAPI application for UMAP dimensionality reduction. It supports stateful model management, secure access keys for data projection, and automated experiment tracking via MLflow.
 
-# Running the app locally
+## Key Features
+* **Stateful Training**: Train a model once, receive a secure token, and use it later for consistent projections.
+* **MLflow Integration**: Automated logging of parameters, metrics, and models.
+* **Environment Isolation**: Separate experiments for `dev`, `prod`, and `streamlit`.
+* **Robust Fallback**: Automatically switches to `umap-learn` if the custom implementation fails.
 
-```bash
-uv run uvicorn app.api:app
+---
+
+## Running the App Locally
+
+### 1. Configure Environment
+Create a `.env` file in the root directory:
+```text
+MLFLOW_TRACKING_URI=your_mlflow_server_url
+MLFLOW_TRACKING_USERNAME=your_username
+MLFLOW_TRACKING_PASSWORD=your_password
+APP_ENV=dev
 ```
 
+### 2. Launch the Service
+```bash
+uv run uvicorn app.api.api:app
+```
 The service will be reachable at `http://127.0.0.1:8000`.  
-Open `http://127.0.0.1:8000/docs` to explore the API in Swagger UI.
+Explore the interactive documentation at `http://127.0.0.1:8000/docs`.
 
-Open `http://127.0.0.1:8000/predict` to test that the API is live.
+---
 
-Send a POST request to `http://127.0.0.1:8000/umap` to test the API with a CSV file. An example is provided in `tests/test_api.sh`. This takes a few seconds to compute.
+## API Endpoints
 
-# How it works
+### 1. Training (`POST /train`)
+Upload a CSV file to train a new UMAP manifold.
+* **Inputs**: CSV file, UMAP hyperparameters (`n_neighbors`, `min_dist`, etc.).
+* **Output**: A secure `access_key`.
+* **Side Effect**: Logs parameters and the trained model as a PyFunc artifact in MLflow.
 
-Code is in `app/api.py`.
+### 2. Projection (`POST /transform`)
+Apply an existing model to new data.
+* **Inputs**: Secure `access_key` and a CSV file with new data.
+* **Output**: Low-dimensional coordinates (embedding).
+* **Benefit**: Ensures the projection is consistent with the original training manifold.
 
-The source code defines entrypoints, which correspond an URL. The client sends a HTTP request to that URL.
+### 3. Legacy One-Shot (`POST /umap`)
+Classic fit-transform operation. Does not provide an access key or state persistence.
 
-Note that to send files, the client needs to send a POST request.
+### 4. Health Check (`GET /`)
+Returns API version and status.
 
-Several parameters can be added, including:
-- `n_neighbors`: 15 by default,
-- `n_components`: 2 by default,
-- `min_dist`: 0.1 by default,
-- `knn_metric`: "euclidean" by default,
-- `knn_method`: "approx" by default,
+---
 
-# Notes
+## Experiment Tracking (MLflow)
 
-When the hand-made umap algorithm does not work, the API switches to the umap-learn algorithm. The KNN is then automatically approximated and not exact.
+The API uses a dynamic experiment naming convention based on the `APP_ENV` variable and the `X-Client-Source` header:
+* **Path Pattern**: `/{environment}/{operation-type}`
+* **Environments**: Runs are grouped into `/dev/`, `/prod_user/`, or `/streamlit/` to keep the dashboard organized.
 
+---
+
+## Technical Notes
+
+### Automated Fallback
+The API prioritizes the custom `umap_mapping` implementation. If an error occurs during fitting:
+1. It logs a `training_success: 0` metric to MLflow.
+2. It sets a `fallback: True` parameter.
+3. It completes the request using the standard `umap-learn` library to ensure service continuity.
+
+### Security
+Model data is isolated in an in-memory cache. Access to a specific model's transform capability is restricted to users holding the unique `access_key` generated at training time.
+
+### Dependencies
+Managed via `uv`. Key libraries include `polars` for fast I/O, `scikit-learn` for preprocessing, and `mlflow` for lifecycle management.

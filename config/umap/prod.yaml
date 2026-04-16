@@ -1,5 +1,7 @@
-n_neighbors: 20
-n_components: 5
-min_dist: 0.01
+n_neighbors: 15
+n_components: 2
+min_dist: 0.1
 KNN_metric: "euclidean"
 KNN_method: "approx"
+n_epochs_train: 200
+n_epochs_transform: 100

@@ -1,4 +1,5 @@
 defaults:
+  - api: default
   - dataset: default
   - metrics: default
   - mlflow: default

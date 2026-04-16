@@ -29,7 +29,6 @@ def trained_umap():
     model = umap_mapping(n_components=2)
     Y = model.fit_transform(X_scaled)
 
-    # 🔥 IMPORTANT : on simule ton script
     model.X_train_ = np.array([])
     model.Y_train_ = np.array([])
 
@@ -56,11 +55,11 @@ def test_full_mlflow_pipeline(mlflow_tmp_dir, trained_umap):
 
         run_id = tracker.current_run_id
 
-    # 🔁 reload modèle
+    # Reload model
     model_uri = f"runs:/{run_id}/umap_model"
     loaded_model = mlflow.pyfunc.load_model(model_uri)
 
-    # 🔮 test predict
+    # Test predict
     X_new = X_scaled[:10]
     preds = loaded_model.predict(X_new)
 
@@ -91,7 +90,6 @@ def test_load_context_restores_state(mlflow_tmp_dir, trained_umap):
 
     internal = loaded_model._model_impl.python_model.umap_model
 
-    # 🔥 DOIT être restauré (et pas vide)
     assert internal.X_train_.size > 0
     assert internal.Y_train_.size > 0
 
@@ -99,6 +97,5 @@ def test_load_context_restores_state(mlflow_tmp_dir, trained_umap):
 def test_model_is_broken_without_artifacts(trained_umap):
     model, _, _ = trained_umap
 
-    # 🔥 modèle volontairement vidé
     assert model.X_train_.size == 0
     assert model.Y_train_.size == 0

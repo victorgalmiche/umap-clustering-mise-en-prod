@@ -3,3 +3,5 @@ n_components: 2
 min_dist: 0.001
 KNN_metric: "euclidean"
 KNN_method: "exact"
+n_epochs_train: 200
+n_epochs_transform: 100
