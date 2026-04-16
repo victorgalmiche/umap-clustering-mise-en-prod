@@ -51,6 +51,40 @@ def run_umap_api(
         return np.array(data["embedding"]), data["access_key"]
 
 
+def run_umap_transform(
+    df: pd.DataFrame,
+    access_key: str,
+    n_epochs: int
+) -> np.ndarray:
+    """
+    Call the API to run umap.
+    mode: umap or train
+    """
+    # url = f"http://0.0.0.0:8000/{mode}"
+    url = "https://umap-api-mmvs.lab.sspcloud.fr/transform"
+
+    csv_buffer = df.to_csv(index=False).encode()
+
+    files = {
+        "file": ("data.csv", csv_buffer, "text/csv")
+    }
+
+    data = {
+        "access_key": access_key,
+        "n_epochs": n_epochs,
+        "x_client_source": "streamlit"
+    }
+
+    response = requests.post(url, files=files, data=data)
+
+    if response.status_code != 200:
+        raise Exception(f"API error: {response.text}")
+
+    data = response.json()
+
+    return np.array(data["embedding"])
+
+
 def run_kmeans(X, n_clusters):
     return KMeans(n_clusters).fit(X).labels_
 

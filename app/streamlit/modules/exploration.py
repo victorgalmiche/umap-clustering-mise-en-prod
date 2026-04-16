@@ -149,7 +149,10 @@ def render():
     save_model = st.checkbox("Do you want to save your model?")
 
     if st.button("Run UMAP"):
-        X_df = data_to_embed.drop(columns=[target_column])
+        if target_column is not None:
+            X_df = data_to_embed.drop(columns=[target_column])
+        else:
+            X_df = data_to_embed.copy()
         X_df = X_df.select_dtypes(include=[np.number])
 
         with st.spinner("Running UMAP..."):
@@ -205,9 +208,10 @@ def render():
 
         if embedding.shape[1] == 2:
             plot_df = pd.DataFrame(embedding, columns=["x", "y"])
-            plot_df[target_column] = data_to_embed[target_column].astype(str)
+            if target_column:
+                plot_df[target_column] = data_to_embed[target_column].astype(str)
             fig = px.scatter(plot_df, x="x", y="y", color=target_column)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
         download_df = pd.DataFrame(
             embedding,
@@ -222,14 +226,18 @@ def render():
         # -----------------------------
         st.header("Clustering")
 
-        clustering_method = st.selectbox("Method", ["KMeans", "HDBSCAN"])
+        clustering_method = st.selectbox(
+            "Method",
+            ["KMeans", "HDBSCAN"],
+            key="clustering_method"
+        )
 
         if clustering_method == "KMeans":
-            n_clusters = st.slider("n_clusters", 2, 20, 5)
+            n_clusters = st.slider("n_clusters", 2, 20, 5, key="n_clusters")
         else:
-            min_cluster_size = st.slider("min_cluster_size", 2, 50, 5)
+            min_cluster_size = st.slider("min_cluster_size", 2, 50, 5, key="min_cluster_size")
 
-        if st.button("Run Clustering"):
+        if st.button("Run Clustering", key="run_clustering"):
             with st.spinner("Clustering..."):
                 if clustering_method == "KMeans":
                     labels = run_kmeans(embedding, n_clusters)
@@ -261,7 +269,7 @@ def render():
                 "cluster": labels.astype(str)
             })
             fig = px.scatter(plot_df, x="x", y="y", color="cluster")
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
         result_df = pd.DataFrame(embedding, columns=[f"dim_{i}" for i in range(embedding.shape[1])])
         result_df["cluster"] = labels
