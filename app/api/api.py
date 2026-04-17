@@ -58,23 +58,19 @@ def get_experiment_path(base_name: str, client_source: Optional[str] = None) -> 
     env = client_source if client_source else os.getenv("APP_ENV", "dev")
     return f"/{env}/{base_name}"
 
-def get_polars_from_request():
+
+def get_polars_from_request(content):
     """
     Get CSV data from the POST request
     Convert to a Polars dataframe
-    raise exception if POST is not a CSV file (only check extension)
     raise exception if more than 500 lines (reason: limit compute ressources)
     """
-    
-    if not file.filename.lower().endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Only CSV files are accepted.")
-    
-    content = await file.read()
+
     df = pl.read_csv(io.BytesIO(content))
-    
+
     if df.height >= 500:
         raise HTTPException(status_code=400, detail="CSV file must have less than 500 lines.")
-    
+
     return df
 
 @app.get("/", tags=["General"], summary="Welcome endpoint")
@@ -144,7 +140,11 @@ async def train_model(
     """
 
     # Data ingestion
-    df = get_polars_from_request()
+    if not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files are accepted.")
+
+    content = await file.read()
+    df = get_polars_from_request(content)
     n_samples, n_features = df.shape
 
     # MLflow setup
@@ -264,7 +264,11 @@ async def transform_data(
     model, scaler, _, _ = model_cache[access_key]
 
     # Processing
-    df = get_polars_from_request()
+    if not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files are accepted.")
+
+    content = await file.read()
+    df = get_polars_from_request(content)
 
     X_new_scaled = scaler.transform(df.to_pandas())
 
@@ -348,7 +352,11 @@ async def apply_umap(
         JSON object with embedding
     """
 
-    df = get_polars_from_request()
+    if not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files are accepted.")
+    
+    content = await file.read()
+    df = get_polars_from_request(content)
 
     exp_path = get_experiment_path("umap-legacy", x_client_source)
     tracker = ExperimentTracker(
