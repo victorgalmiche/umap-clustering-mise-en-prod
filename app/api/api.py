@@ -65,6 +65,7 @@ async def monitoring_middleware(request: Request, call_next):
     start_time = time.time()
     endpoint = request.url.path
     method = request.method
+    run_name = f"{method}-{endpoint.lstrip('/')}"
 
     try:
         response = await call_next(request)
@@ -73,7 +74,7 @@ async def monitoring_middleware(request: Request, call_next):
         # Log successful requests
         import mlflow
 
-        with mlflow.start_run():
+        with mlflow.start_run(run_name=run_name):
             mlflow.set_tag("endpoint", endpoint)
             mlflow.set_tag("method", method)
             mlflow.set_tag("status_code", response.status_code)
@@ -85,7 +86,7 @@ async def monitoring_middleware(request: Request, call_next):
         # Log errors
         import mlflow
 
-        with mlflow.start_run():
+        with mlflow.start_run(run_name=run_name):
             mlflow.set_tag("endpoint", endpoint)
             mlflow.set_tag("method", method)
             mlflow.log_metric("error", 1)
