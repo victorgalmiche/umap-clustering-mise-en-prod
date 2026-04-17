@@ -364,7 +364,7 @@ class umap_mapping:
 
         ax.set_title("UMAP optimization - epoch 0")
 
-        last_state = {"Y": None}
+        last_state = {"Y": Y}
 
         def update(frame: tuple[np.ndarray, int]):
             Y_current, epoch = frame

@@ -10,13 +10,18 @@ def run_umap_api(
     n_components: int = 2,
     min_dist: float = 0.1,
     knn_metric: str = "euclidean",
-    knn_method: str = "approx"
+    knn_method: str = "approx",
+    n_epochs: int = 200,
+    mode: str = "umap"
 ) -> np.ndarray:
     """
     Call the API to run umap.
+    mode: umap or train
     """
-    # url = "http://0.0.0.0:8000/umap"
-    url = "https://umap-api-mmvs.lab.sspcloud.fr/umap"
+    assert mode in ["umap", "train"], ValueError("Invalid mode")
+
+    # url = f"http://0.0.0.0:8000/{mode}"
+    url = f"https://umap-api-mmvs.lab.sspcloud.fr/{mode}"
 
     csv_buffer = df.to_csv(index=False).encode()
 
@@ -30,6 +35,44 @@ def run_umap_api(
         "min_dist": min_dist,
         "knn_metric": knn_metric,
         "knn_method": knn_method,
+        "x_client_source": "streamlit"
+    }
+
+    response = requests.post(url, files=files, data=data)
+
+    if response.status_code != 200:
+        raise Exception(f"API error: {response.text}")
+
+    data = response.json()
+
+    if mode == "umap":
+        return np.array(data["embedding"])
+    if mode == "train":
+        return np.array(data["embedding"]), data["access_key"]
+
+
+def run_umap_transform(
+    df: pd.DataFrame,
+    access_key: str,
+    n_epochs: int
+) -> np.ndarray:
+    """
+    Call the API to run umap.
+    mode: umap or train
+    """
+    # url = f"http://0.0.0.0:8000/{mode}"
+    url = "https://umap-api-mmvs.lab.sspcloud.fr/transform"
+
+    csv_buffer = df.to_csv(index=False).encode()
+
+    files = {
+        "file": ("data.csv", csv_buffer, "text/csv")
+    }
+
+    data = {
+        "access_key": access_key,
+        "n_epochs": n_epochs,
+        "x_client_source": "streamlit"
     }
 
     response = requests.post(url, files=files, data=data)
