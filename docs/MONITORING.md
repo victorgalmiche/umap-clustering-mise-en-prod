@@ -16,7 +16,7 @@ All metrics are logged to **MLflow** under the `/monitoring/app-metrics` experim
 
 ### Middleware-Based Tracking
 
-A FastAPI middleware (`monitoring_middleware`) automatically tracks every request:
+A FastAPI middleware (`monitoring_middleware` in `app/api/api.py`) automatically tracks every request:
 - Measures latency for all endpoints
 - Logs HTTP status codes
 - Records success/failure status
@@ -124,82 +124,11 @@ Metrics logged:
 - Latency
 - Success/failure status
 
+
 ## Viewing Metrics
 
-### MLflow Dashboard
+Currently the metrics are logged to MLflow, but the existing dashboard graphs are not very useful.
 
-Access the MLflow dashboard at your configured `MLFLOW_TRACKING_URI`:
 
-```bash
-MLFLOW_TRACKING_URI=http://localhost:5000
-```
 
-Navigate to: `http://localhost:5000` → Experiments → `/monitoring/app-metrics`
 
-### Metric Examples
-
-**Average latency per endpoint:**
-```
-SELECT endpoint, AVG(latency_ms) FROM metrics GROUP BY endpoint
-```
-
-**Error rate per endpoint:**
-```
-SELECT endpoint, error_type, COUNT(*) FROM error_logs GROUP BY endpoint, error_type
-```
-
-**Cache utilization over time:**
-```
-SELECT timestamp, cached_models, cache_utilization_pct FROM metrics
-```
-
-## Best Practices
-
-### 1. Monitor Response Times
-
-Set alerts when latency exceeds thresholds:
-- 🟢 **Healthy**: < 2000 ms
-- 🟡 **Degraded**: 2000-5000 ms
-- 🔴 **Critical**: > 5000 ms
-
-### 2. Track Error Patterns
-
-Monitor error types to catch issues:
-- `invalid_csv_format` → data validation problem
-- `invalid_access_key` → user misuse or key expiration
-- `computation_error` → algorithm failure (should be rare with fallback)
-
-### 3. Cache Management
-
-Monitor cache growth:
-- If `cached_models` grows unbounded, consider implementing cache eviction
-- Current implementation: In-memory cache (lost on restart)
-- Watch `cache_utilization_pct` to plan capacity
-
-### 4. Alerting Rules
-
-**Recommended alerts:**
-```
-- latency_ms > 5000 for more than 5 requests
-- error_count > 10 per minute per endpoint
-- cached_models > 80 (nearing capacity)
-- critical: true errors (computation_error, timeout)
-```
-
-## Configuration
-
-Monitoring is automatically initialized when the API starts:
-
-```python
-monitor = get_monitor()
-```
-
-MLflow connection is configured via environment variables:
-
-```bash
-MLFLOW_TRACKING_URI=http://mlflow-server:5000
-MLFLOW_TRACKING_USERNAME=user
-MLFLOW_TRACKING_PASSWORD=password
-```
-
-The monitor will log an error and fail gracefully if MLflow is unavailable.

@@ -16,14 +16,14 @@ Aka how to test the app without making noisy commits to the main branch. A propo
 - Deployment is not affected because it uses hard-coded tags.
 - **test in Docker** : `kubectl run -it api-ml --image=your_image` can be used to test image.
 
-# When ready to merge
+# Get ready to merge
 
 - create a pull request. Note that a temporary pull request can be created on Github.
 - bump tags for the Docker images
 - you can still make changes after tagging the Docker images, until these are pulled / deployed, cf below.
 - merge the pull request (this triggers a push to DockerHub)
 
-# Developper updates the Deployment repo
+# Deploy by pushing to the Deployment repo
 
 - Developper manually updates the tags in the deployment repository.
 - Argo CD detects changes in the deployment configuration
@@ -32,7 +32,7 @@ Aka how to test the app without making noisy commits to the main branch. A propo
 
 _Why this is necessary_ : ArgoCD pulls from DockerHub, but only once for each tag. This is a Kubernetes default config: the image is pulled IfNotPresent.
 Consequently, you need to modify the image tag in `deployment.yaml` to pull an updated Docker image.
-Therefore there is a small uncertainty in the exact version that is deployed. A SHA digest can be used to fix the exact version of the Docker image.
+Therefore there is a small uncertainty in the exact version that is deployed. We use the SHA digest to fix the exact version of the Docker image. However, identifying the corresponding Github commit or tag is not trivial (this is on v2.0 todo list).
 
 Note : two alternatives. 1) If the image tag is not specified or is set to latest, the pull policiy defaults to Always. 2) An ArgoCD image updater resource (an additional pod)can detect updates to DockerHub. It does so by making commits to the deployment repository
 

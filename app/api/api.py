@@ -106,13 +106,23 @@ def get_polars_from_request(content):
     """
     Get CSV data from the POST request
     Convert to a Polars dataframe
+    Keep only numerical columns
     raise exception if more than 500 lines (reason: limit compute ressources)
     """
 
-    df = pl.read_csv(io.BytesIO(content))
+    df = pl.read_csv(io.BytesIO(content)).select(pl.selectors.numeric())
 
     if df.height >= 500:
-        raise HTTPException(status_code=400, detail="CSV file must have less than 500 lines.")
+        raise HTTPException(
+            status_code=400,
+            detail="CSV file must have less than 500 lines (ressources limit)."
+            )
+
+    if df.width < 3:
+        raise HTTPException(
+            status_code=400,
+            detail="CSV file must have at least 3 numerical columns."
+            )
 
     return df
 
