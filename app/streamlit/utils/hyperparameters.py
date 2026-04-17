@@ -39,7 +39,7 @@ def select_umap_params(n_valid_columns):
     )
     params["min_dist"] = st.sidebar.slider(
         "min_dist",
-        0.0,
+        0.01,
         1.0,
         key="min_dist"
     )

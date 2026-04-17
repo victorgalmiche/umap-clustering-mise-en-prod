@@ -33,11 +33,12 @@ with st.sidebar:
     else:
         st.error("API Offline", icon="🔴")
 
-    st.divider()
-
 
 # --- MAIN INTERFACE ---
 st.title("UMAP Dimensionality Reduction & Clustering")
+st.markdown("""
+        Use this tool to project high-dimensional data into 2D or 3D space and identify natural groupings using UMAP and unsupervised clustering.
+    """)
 
 tab_exp, tab_trans = st.tabs([
     "🔍 Exploration (/umap) and training (/train)",

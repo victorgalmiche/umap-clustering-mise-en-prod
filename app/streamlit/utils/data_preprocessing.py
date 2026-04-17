@@ -20,7 +20,7 @@ def reset_state():
 @st.cache_data
 def load_and_sample(df):
     """Limit to 500 lines, deterministic"""
-    return df.sample(n=min(500, len(df)), random_state=42).reset_index(drop=True)
+    return df.sample(n=min(499, len(df)), random_state=42).reset_index(drop=True)
 
 
 def fetch_data_source():
@@ -31,7 +31,7 @@ def fetch_data_source():
     )
 
 
-def fetch_csv_file(data_file):
+def fetch_csv_file(data_file, suffix_key):
     if data_file is not None:
         raw_df = pd.read_csv(data_file)
 
@@ -47,7 +47,7 @@ def fetch_csv_file(data_file):
             "Select the target column",
             options=[None] + list(data_to_embed.columns),
             help="This column will be ignored by UMAP but used for visualization.",
-            key="target_column"
+            key="target_column" + suffix_key
         )
     else:
         st.sidebar.warning("Waiting for file...")
