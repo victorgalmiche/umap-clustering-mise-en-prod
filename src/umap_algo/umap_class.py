@@ -567,7 +567,7 @@ class umap_mapping:
         # 2. rho & sigma
         rho, sigma = self.rho_sigma(sp.csr_matrix(distances))
 
-        # 3. non-symetric weigghts
+        # 3. non-symetric weights
         weights = self._cross_weights(index, distances, rho, sigma)
 
         # 4. initialize embeddings as a barycenters of trained neighbors

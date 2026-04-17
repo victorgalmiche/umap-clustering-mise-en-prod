@@ -335,7 +335,10 @@ async def transform_data(
     with tracker.run():
         tracker.log_params({"n_epochs": n_epochs, "n_samples": df.shape[0]})
         try:
-            Y_new = model.transform(X_new_scaled, n_epochs=n_epochs)
+            if isinstance(model, umap.UMAP):
+                Y_new = model.transform(X_new_scaled)
+            else:
+                Y_new = model.transform(X_new_scaled, n_epochs=n_epochs)
             tracker.log_metrics({"transform_success": 1})
         except Exception as e:
             tracker.log_metrics({"transform_success": 0})
