@@ -8,6 +8,12 @@ A production-ready FastAPI application for UMAP dimensionality reduction. It sup
 * **Environment Isolation**: Separate experiments for `dev`, `prod`, and `streamlit`.
 * **Robust Fallback**: Automatically switches to `umap-learn` if the custom implementation fails.
 
+## Caveats
+UMAP is computationally intensive and storage cleaning is not implemented yet.
+As a first step : 
+- limit request body to 2M and 500 lines. This translates to CSV files with no more than 500 lines (enforced in `app/api/api.py` and `app/streamlit/streamlit.py`) and 250 columns (deduced from 2M size limit)
+- limit rates to 1 request per second and 2 concurrent connections (in `ingress.yaml`), see [here](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#rate-limiting)
+
 ---
 
 ## Running the App Locally

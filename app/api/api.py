@@ -58,6 +58,24 @@ def get_experiment_path(base_name: str, client_source: Optional[str] = None) -> 
     env = client_source if client_source else os.getenv("APP_ENV", "dev")
     return f"/{env}/{base_name}"
 
+def get_polars_from_request():
+    """
+    Get CSV data from the POST request
+    Convert to a Polars dataframe
+    raise exception if POST is not a CSV file (only check extension)
+    raise exception if more than 500 lines (reason: limit compute ressources)
+    """
+    
+    if not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files are accepted.")
+    
+    content = await file.read()
+    df = pl.read_csv(io.BytesIO(content))
+    
+    if df.height >= 500:
+        raise HTTPException(status_code=400, detail="CSV file must have less than 500 lines.")
+    
+    return df
 
 @app.get("/", tags=["General"], summary="Welcome endpoint")
 def show_welcome_page():
@@ -124,12 +142,9 @@ async def train_model(
         - n_samples: Number of training samples
         - message: Usage instructions
     """
-    if not file.filename.lower().endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Only CSV files are accepted.")
 
     # Data ingestion
-    content = await file.read()
-    df = pl.read_csv(io.BytesIO(content))
+    df = get_polars_from_request()
     n_samples, n_features = df.shape
 
     # MLflow setup
@@ -245,15 +260,12 @@ async def transform_data(
     if access_key not in model_cache:
         raise HTTPException(status_code=403, detail="Invalid access_key.")
 
-    if not file.filename.lower().endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Only CSV files are accepted.")
-
     # Retrieve objects from cache
     model, scaler, _, _ = model_cache[access_key]
 
     # Processing
-    content = await file.read()
-    df = pl.read_csv(io.BytesIO(content))
+    df = get_polars_from_request()
+
     X_new_scaled = scaler.transform(df.to_pandas())
 
     exp_path = get_experiment_path("umap-transform", x_client_source)
@@ -335,11 +347,8 @@ async def apply_umap(
     dict
         JSON object with embedding
     """
-    if not file.filename.lower().endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Only CSV files are accepted.")
 
-    content = await file.read()
-    df = pl.read_csv(io.BytesIO(content))
+    df = get_polars_from_request()
 
     exp_path = get_experiment_path("umap-legacy", x_client_source)
     tracker = ExperimentTracker(
