@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans, HDBSCAN
 
-# API_BASE_URL = "https://umap-api-mmvs.lab.sspcloud.fr/"
-API_BASE_URL = "http://127.0.0.1:8000/"
+API_BASE_URL = "https://umap-api-mmvs.lab.sspcloud.fr/"
+# API_BASE_URL = "http://127.0.0.1:8000/"
 
 
 def run_umap_api(
