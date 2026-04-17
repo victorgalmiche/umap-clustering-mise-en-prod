@@ -186,15 +186,6 @@ Monitor cache growth:
 - critical: true errors (computation_error, timeout)
 ```
 
-## Future Improvements (v2)
-
-- [ ] Implement cache eviction (LRU or TTL)
-- [ ] Add request rate-limiting per client
-- [ ] Track model inference latency separately from I/O
-- [ ] Add Prometheus exporter for Grafana integration
-- [ ] Implement distributed tracing (request ID tracking)
-- [ ] Add SLA monitoring and performance regression detection
-
 ## Configuration
 
 Monitoring is automatically initialized when the API starts:
