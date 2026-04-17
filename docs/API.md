@@ -1,14 +1,22 @@
-# UMAP Management API
+# UMAP Backend API
 
-A production-ready FastAPI application for UMAP dimensionality reduction. It supports stateful model management, secure access keys for data projection, and automated experiment tracking via MLflow.
+A FastAPI application for UMAP dimensionality reduction. 
 
-## Key Features
-* **Stateful Training**: Train a model once, receive a secure token, and use it later for consistent projections.
+## In Production
+
+Upload a CSV file, receive low-dimensional embeddings (classic fit-transform). Does not provide an access key or state persistence.
+
 * **MLflow Integration**: Automated logging of parameters, metrics, and models.
+
+## In Development
+
+* **Stateful Training**: Train a model once, receive a secure token, and use it later for consistent projections.
 * **Environment Isolation**: Separate experiments for `dev`, `prod`, and `streamlit`.
-* **Robust Fallback**: Automatically switches to `umap-learn` if the custom implementation fails.
+
+Features are implemented and exposed, but service is not guaranteed.
 
 ## Caveats
+
 UMAP is computationally intensive and storage cleaning is not implemented yet.
 As a first step : 
 - limit request body to 2M and 500 lines. This translates to CSV files with no more than 500 lines (enforced in `app/api/api.py` and `app/streamlit/streamlit.py`) and 250 columns (deduced from 2M size limit)
@@ -38,20 +46,20 @@ Explore the interactive documentation at `http://127.0.0.1:8000/docs`.
 
 ## API Endpoints
 
-### 1. Training (`POST /train`)
+### 1. Projection (`POST /umap`)
+Upload a CSV file, receive low-dimensional embeddings (classic fit-transform). Does not provide an access key or state persistence.
+
+### 2. Training (`POST /train`)
 Upload a CSV file to train a new UMAP manifold.
 * **Inputs**: CSV file, UMAP hyperparameters (`n_neighbors`, `min_dist`, etc.).
 * **Output**: A secure `access_key`.
 * **Side Effect**: Logs parameters and the trained model as a PyFunc artifact in MLflow.
 
-### 2. Projection (`POST /transform`)
+### 3. Projection (`POST /transform`)
 Apply an existing model to new data.
 * **Inputs**: Secure `access_key` and a CSV file with new data.
 * **Output**: Low-dimensional coordinates (embedding).
 * **Benefit**: Ensures the projection is consistent with the original training manifold.
-
-### 3. Legacy One-Shot (`POST /umap`)
-Classic fit-transform operation. Does not provide an access key or state persistence.
 
 ### 4. Health Check (`GET /`)
 Returns API version and status.

@@ -31,21 +31,25 @@ model_cache = {}
 tags_metadata = [
     {"name": "General", "description": "System health and welcome information."},
     {"name": "Model Management",
-     "description": "Training and projection operations using secure access keys."},
-    {"name": "Legacy", "description": "One-shot UMAP projections without persistence."},
+     "description": "Training and projection operations using secure access keys (experimental)."},
+    {"name": "Production", "description": "One-shot UMAP projections without persistence."},
 ]
 
 app = FastAPI(
     title="UMAP Management API",
     description="""
-    This API provides high-performance dimension reduction services.
+    This API provides dimension reduction services.
 
-    ### Workflow:
+    ### Usage :
+    - `/umap`: upload a CSV. Receive low-dimensional embeddings
+
+    ### In development
     1. **Train** a model by uploading a CSV. Receive a secure `access_key`.
     2. **Transform** new data using the manifold learned during training via your `access_key`.
     3. **Track** results automatically in MLflow.
+    Service is not guaranteed.
     """,
-    version="0.2.0",
+    version="0.3.1",
     openapi_tags=tags_metadata
 )
 
@@ -78,7 +82,7 @@ def show_welcome_page():
     """Returns basic API metadata."""
     return {
         "api": "UMAP API",
-        "version": cfg.api.version,
+        "version": app.version,
         "status": "ready"
     }
 
@@ -303,7 +307,7 @@ async def transform_data(
 @app.post(
     "/umap",
     summary="One-shot UMAP projection",
-    tags=["Legacy"]
+    tags=["Production"]
 )
 async def apply_umap(
     file: UploadFile = File(...),
