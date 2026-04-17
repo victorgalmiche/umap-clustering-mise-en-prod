@@ -1,6 +1,9 @@
 import streamlit as st
-
+import requests
 from modules import exploration, transform
+
+# --- CONFIGURATION ---
+API_URL = "https://umap-api-mmvs.lab.sspcloud.fr/"
 
 st.set_page_config(
     page_title="UMAP + Clustering App",
@@ -8,19 +11,41 @@ st.set_page_config(
     menu_items={"About": "Version 0.1"}
 )
 
+
+# --- API STATUS SIDEBAR ---
+def check_api_status():
+    try:
+        # Short timeout so the UI doesn't hang if the API is down
+        response = requests.get(API_URL, timeout=2)
+        if response.status_code == 200:
+            return "online"
+        return "offline"
+    except Exception:
+        return "offline"
+
+
+with st.sidebar:
+    st.header("System Status")
+    status = check_api_status()
+
+    if status == "online":
+        st.success("API Connected", icon="🟢")
+    else:
+        st.error("API Offline", icon="🔴")
+
+    st.divider()
+
+
+# --- MAIN INTERFACE ---
 st.title("UMAP Dimensionality Reduction & Clustering")
 
-# On crée 3 onglets pour garder l'ancien et ajouter le nouveau
 tab_exp, tab_trans = st.tabs([
-    "🔍 Exploration (/umap)",
-    "🚀 Projection (/transform)"
+    "🔍 Exploration (/umap) and training (/train)",
+    "🚀 Projection (/transform) - Experimental"
 ])
 
 with tab_exp:
-    # On passe les dataframes nécessaires au module
     exploration.render()
 
 with tab_trans:
-    # Ici on n'a pas forcément besoin de data_to_embed car on upload 
-    # de nouveaux points, mais on peut passer des infos de contexte.
     transform.render()

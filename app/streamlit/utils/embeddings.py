@@ -3,6 +3,9 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans, HDBSCAN
 
+# API_BASE_URL = "https://umap-api-mmvs.lab.sspcloud.fr/"
+API_BASE_URL = "http://127.0.0.1:8000/"
+
 
 def run_umap_api(
     df: pd.DataFrame,
@@ -20,8 +23,7 @@ def run_umap_api(
     """
     assert mode in ["umap", "train"], ValueError("Invalid mode")
 
-    # url = f"http://0.0.0.0:8000/{mode}"
-    url = f"https://umap-api-mmvs.lab.sspcloud.fr/{mode}"
+    url = API_BASE_URL + mode
 
     csv_buffer = df.to_csv(index=False).encode()
 
@@ -60,8 +62,7 @@ def run_umap_transform(
     Call the API to run umap.
     mode: umap or train
     """
-    # url = f"http://0.0.0.0:8000/{mode}"
-    url = "https://umap-api-mmvs.lab.sspcloud.fr/transform"
+    url = API_BASE_URL + "transform"
 
     csv_buffer = df.to_csv(index=False).encode()
 

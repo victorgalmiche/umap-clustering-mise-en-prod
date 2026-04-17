@@ -1,8 +1,11 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 from sklearn.metrics import silhouette_score
-from app.streamlit.website_utils import run_umap_transform, run_hdbscan, run_kmeans
+
+import app.streamlit.utils.embeddings as emb_utils
+import app.streamlit.utils.data_preprocessing as data_utils
+import app.streamlit.utils.hyperparameters as param_utils
+import app.streamlit.utils.visualization as plot_utils
 
 
 def render():
@@ -14,11 +17,6 @@ def render():
     Use a previously generated **Access Key** to project new data points into
     your existing UMAP latent space.
     """)
-
-    @st.cache_data
-    def load_and_sample(df):
-        """Limit to 500 lines, deterministic"""
-        return df.sample(n=min(500, len(df)), random_state=42).reset_index(drop=True)
 
     # --- 1. Security & Key ---
     st.info("Enter your secure token to access your private model.")
@@ -41,18 +39,7 @@ def render():
     )
 
     if new_data_file is not None:
-        df_new = pd.read_csv(new_data_file)
-
-        # Limit the size for fast run of UMAP
-        if len(df_new) >= 500:
-            st.warning("Too many rows (>= 500), data will be sampled.")
-            df_new = load_and_sample(df_new)
-
-        target_column = st.selectbox(
-            "Select the target column",
-            options=[None] + list(df_new.columns),
-            help="This column will be ignored by UMAP but used for visualization."
-        )
+        df_new, new_target_column = data_utils.fetch_csv_file(new_data_file)
 
     else:
         st.warning("Waiting for data...")
@@ -78,13 +65,13 @@ def render():
             return
 
         # Data preparation
-        if target_column is not None:
-            df_to_transform = df_new.drop(columns=[target_column])
+        if new_target_column is not None:
+            df_to_transform = df_new.drop(columns=[new_target_column])
         else:
             df_to_transform = df_new.copy()
 
         with st.spinner("Contacting UMAP API for transformation..."):
-            new_emb = run_umap_transform(
+            new_emb = emb_utils.run_umap_transform(
                 df=df_to_transform,
                 access_key=access_key,
                 n_epochs=n_epochs_trans
@@ -92,34 +79,30 @@ def render():
 
         # Store results in session state
         st.session_state["new_embedding"] = new_emb
-        st.session_state["new_df_preview"] = df_new
 
         st.success(f"Successfully transformed {len(df_new)} points.")
 
     if "new_embedding" in st.session_state:
         new_emb = st.session_state["new_embedding"]
 
-        # TODO: add trustworthiness (need to modify API)
-
         # --- 5. Visualization ---
         st.write("### Projection Results")
 
-        if new_emb.shape[1] == 2:
-            plot_df = pd.DataFrame(new_emb, columns=["x", "y"])
-            if target_column:
-                plot_df[target_column] = df_new[target_column].astype(str)
-            fig = px.scatter(plot_df, x="x", y="y", color=target_column)
-            st.plotly_chart(fig, width='stretch')
+        plot_utils.show_embeddings(
+            embedding=new_emb,
+            data_to_embed=df_new,
+            target_column=new_target_column
+        )
 
         # Download result
-        csv_data = pd.DataFrame(
+        new_csv_data = pd.DataFrame(
             new_emb,
             columns=[f"dim_{i}" for i in range(new_emb.shape[1])]
         ).to_csv(index=False).encode()
 
         st.download_button(
             "Download Projected Points",
-            csv_data,
+            new_csv_data,
             "projected_data.csv",
             "text/csv"
         )
@@ -129,33 +112,19 @@ def render():
         # -----------------------------
         st.header("Clustering")
 
-        new_clustering_method = st.selectbox(
-            "Method",
-            ["KMeans", "HDBSCAN"],
-            key="new_clustering_method"
+        new_clustering_method = param_utils.select_clustering_method(key_suffix="_transform")
+        new_clustering_param = param_utils.select_clustering_param(
+            clustering_method=new_clustering_method,
+            n_samples=len(new_emb),
+            key_suffix="_transform"
         )
-
-        if new_clustering_method == "KMeans":
-            new_n_clusters = st.slider(
-                "n_clusters",
-                2,
-                20,
-                5
-            )
-        else:
-            new_min_cluster_size = st.slider(
-                "min_cluster_size",
-                2,
-                50,
-                5
-            )
 
         if st.button("Run Clustering", key="new_run_clustering"):
             with st.spinner("Clustering..."):
                 if new_clustering_method == "KMeans":
-                    new_labels = run_kmeans(new_emb, new_n_clusters)
+                    new_labels = emb_utils.run_kmeans(new_emb, new_clustering_param)
                 else:
-                    new_labels = run_hdbscan(new_emb, new_min_cluster_size)
+                    new_labels = emb_utils.run_hdbscan(new_emb, new_clustering_param)
 
             st.session_state["new_labels"] = new_labels
             st.success("Clustering completed")
@@ -167,22 +136,16 @@ def render():
         # -----------------------------
         # 7. Metrics
         # -----------------------------
-        sil_score = silhouette_score(new_emb, new_labels)
-        st.metric(label="Silhouette Score", value=f"{sil_score:.4f}")
+        if len(set(new_labels)) >= 2:
+            sil_score = silhouette_score(new_emb, new_labels)
+            st.metric(label="Silhouette Score", value=f"{sil_score:.4f}")
 
         # -----------------------------
         # 8. Visualization with clusters
         # -----------------------------
         st.header("Clustered Visualization")
 
-        if new_emb.shape[1] == 2:
-            plot_df = pd.DataFrame({
-                "x": new_emb[:, 0],
-                "y": new_emb[:, 1],
-                "cluster": new_labels.astype(str)
-            })
-            fig = px.scatter(plot_df, x="x", y="y", color="cluster")
-            st.plotly_chart(fig, width='stretch')
+        plot_utils.show_clusters(embedding=new_emb, labels=new_labels)
 
         result_df = pd.DataFrame(new_emb, columns=[f"dim_{i}" for i in range(new_emb.shape[1])])
         result_df["cluster"] = new_labels
