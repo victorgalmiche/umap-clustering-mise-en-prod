@@ -32,22 +32,27 @@ model_cache = {}
 # API Metadata for Swagger UI (/docs)
 tags_metadata = [
     {"name": "General", "description": "System health and welcome information."},
-    {"name": "Model Management", "description": "Training and projection operations using secure access keys."},
-    {"name": "Legacy", "description": "One-shot UMAP projections without persistence."},
+    {"name": "Model Management",
+     "description": "Training and projection operations using secure access keys (experimental)."},
+    {"name": "Production", "description": "One-shot UMAP projections without persistence."},
 ]
 
 app = FastAPI(
     title="UMAP Management API",
     description="""
-    This API provides high-performance dimension reduction services.
+    This API provides dimension reduction services.
 
-    ### Workflow:
+    ### Usage :
+    - `/umap`: upload a CSV. Receive low-dimensional embeddings
+
+    ### In development
     1. **Train** a model by uploading a CSV. Receive a secure `access_key`.
     2. **Transform** new data using the manifold learned during training via your `access_key`.
     3. **Track** results automatically in MLflow.
+    Service is not guaranteed.
     """,
-    version="0.2.0",
-    openapi_tags=tags_metadata,
+    version="0.4",
+    openapi_tags=tags_metadata
 )
 
 # Initialize monitoring
@@ -95,6 +100,20 @@ def get_experiment_path(base_name: str, client_source: Optional[str] = None) -> 
     env = client_source if client_source else os.getenv("APP_ENV", "dev")
     return f"/{env}/{base_name}"
 
+
+def get_polars_from_request(content):
+    """
+    Get CSV data from the POST request
+    Convert to a Polars dataframe
+    raise exception if more than 500 lines (reason: limit compute ressources)
+    """
+
+    df = pl.read_csv(io.BytesIO(content))
+
+    if df.height >= 500:
+        raise HTTPException(status_code=400, detail="CSV file must have less than 500 lines.")
+
+    return df
 
 @app.get("/", tags=["General"], summary="Welcome endpoint")
 def show_welcome_page():
@@ -162,12 +181,13 @@ async def train_model(
         - n_samples: Number of training samples
         - message: Usage instructions
     """
+
+    # Data ingestion
     if not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are accepted.")
 
-    # Data ingestion
     content = await file.read()
-    df = pl.read_csv(io.BytesIO(content))
+    df = get_polars_from_request(content)
     n_samples, n_features = df.shape
 
     # Log input size metrics
@@ -292,11 +312,15 @@ async def transform_data(
     model, scaler, _, _ = model_cache[access_key]
 
     # Processing
+    if not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files are accepted.")
+
     content = await file.read()
-    df = pl.read_csv(io.BytesIO(content))
+    df = get_polars_from_request(content)
 
     # Log input size metrics
     monitor.log_input_size("/transform", len(content), df.shape[0], df.shape[1])
+    
 
     X_new_scaled = scaler.transform(df.to_pandas())
 
@@ -335,7 +359,11 @@ async def transform_data(
     }
 
 
-@app.post("/umap", summary="One-shot UMAP projection", tags=["Legacy"])
+@app.post(
+    "/umap",
+    summary="One-shot UMAP projection",
+    tags=["Production"]
+)
 async def apply_umap(
     file: UploadFile = File(...),
     n_neighbors: int = Form(cfg.umap.n_neighbors, description="Number of neighbors for KNN"),
@@ -376,12 +404,13 @@ async def apply_umap(
     dict
         JSON object with embedding
     """
+
     if not file.filename.lower().endswith(".csv"):
         monitor.log_error("/umap", "invalid_csv_format")
         raise HTTPException(status_code=400, detail="Only CSV files are accepted.")
-
+    
     content = await file.read()
-    df = pl.read_csv(io.BytesIO(content))
+    df = get_polars_from_request(content)
 
     # Log input size metrics
     monitor.log_input_size("/umap", len(content), df.shape[0], df.shape[1])
