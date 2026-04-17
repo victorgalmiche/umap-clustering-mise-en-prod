@@ -165,7 +165,6 @@ async def train_model(
 
         model, scaler, dataset_standardized, Y = fit_umap_model(df, umap_params, tracker)
 
-        # MLflow persistence
         tracker.log_pyfunc_model(
             pyfunc_model=UmapStorage(model),
             artifact_path="umap_model",
@@ -181,7 +180,6 @@ async def train_model(
             }
         )
 
-    # Caching and access control
     access_key = secrets.token_urlsafe(32)
     model_cache[access_key] = (model, scaler, dataset_standardized, Y)
 
@@ -231,12 +229,10 @@ async def transform_data(
         monitor.log_error("/transform", "invalid_access_key")
         raise HTTPException(status_code=403, detail="Invalid access_key.")
 
-    # Retrieve objects from cache
     model, scaler, _, _ = model_cache[access_key]
 
     df, content = await validate_and_read_csv(file=file)
 
-    # Log input size metrics
     monitor.log_input_size("/transform", len(content), df.shape[0], df.shape[1])
     
     X_new_scaled = scaler.transform(df.to_pandas())
@@ -284,12 +280,7 @@ async def transform_data(
 )
 async def apply_umap(
     file: UploadFile = File(...),
-    n_neighbors: int = Form(cfg.umap.n_neighbors, description="Number of neighbors for KNN"),
-    n_components: int = Form(cfg.umap.n_components, description="Target dimension"),
-    min_dist: float = Form(cfg.umap.min_dist, description="Minimum distance in the embedding"),
-    knn_metric: str = Form(cfg.umap.KNN_metric, description="Distance metric"),
-    knn_method: str = Form(cfg.umap.KNN_method, description="KNN search method: 'exact' or 'approx'"),
-    n_epochs: int = Form(cfg.umap.n_epochs_train, description="Optimization iterations"),
+    params: UmapParameters = Depends(umap_parameters),
     x_client_source: Optional[str] = Header(None),
 ):
     """
@@ -302,20 +293,22 @@ async def apply_umap(
     ----------
     file : UploadFile
         CSV file corresponding to the data to fit-transform
-    n_neighbors : int
-        Number of neighbors for KNN (default: 15)
-    n_components : int
-        Output embedding dimension (default: 2)
-    min_dist : float
-        Minimum distance in low-dimensional space (default: 0.1)
-    knn_metric : str
-        Distance metric: 'euclidean', 'manhattan', etc. (default: 'euclidean')
-    knn_method : str
-        KNN method: 'exact' or 'approx' (default: 'approx')
-    n_epochs : int
-        Optimization epochs (default: 200)
-    x_client_source : str (optional)
-        To identify the caller for monitoring purposes
+    params: UmapParameters
+        including :
+            n_neighbors : int
+                Number of neighbors for KNN (default: 15)
+            n_components : int
+                Output embedding dimension (default: 2)
+            min_dist : float
+                Minimum distance in low-dimensional space (default: 0.1)
+            knn_metric : str
+                Distance metric: 'euclidean', 'manhattan', etc. (default: 'euclidean')
+            knn_method : str
+                KNN method: 'exact' or 'approx' (default: 'approx')
+            n_epochs : int
+                Optimization epochs (default: 200)
+            x_client_source : str (optional)
+                To identify the caller for monitoring purposes
 
     Returns
     -------
@@ -325,8 +318,9 @@ async def apply_umap(
 
     df, content = await validate_and_read_csv(file=file)
 
-    # Log input size metrics
-    monitor.log_input_size("/umap", len(content), df.shape[0], df.shape[1])
+    umap_params, n_samples, n_features = prepare_umap_params(df, params)
+
+    monitor.log_input_size("/umap", len(content), n_samples, n_features)
 
     tracker = ExperimentTracker(
         experiment_name=get_experiment_path("umap-legacy", x_client_source),
@@ -335,35 +329,10 @@ async def apply_umap(
     )
 
     with tracker.run():
-        tracker.log_params({"n_neighbors": n_neighbors, "n_samples": df.shape[0]})
+        tracker.log_params(umap_params)
 
-        scaler = StandardScaler()
-        dataset_standardized = scaler.fit_transform(df.to_pandas())
-
-        model = umap_mapping(
-            n_neighbors=n_neighbors,
-            n_components=n_components,
-            min_dist=min_dist,
-            KNN_metric=knn_metric,
-            KNN_method=knn_method,
-        )
-
-        try:
-            result = model.fit_transform(dataset_standardized)
-            dataset_transformed = result[0] if isinstance(result, tuple) else result
-            tracker.log_metrics({"success": 1})
-        except Exception as e:
-            logger.warning(f"Custom fallback: {e}")
-            model = umap.UMAP(n_neighbors=n_neighbors, n_components=n_components, min_dist=min_dist)
-            dataset_transformed = model.fit_transform(dataset_standardized)
-            tracker.log_metrics({"success": 0, "fallback": 1})
-
-        tracker.log_pyfunc_model(
-            pyfunc_model=UmapStorage(model),
-            artifact_path="legacy_model",
-            registered_model_name="umap_legacy_models",
-            X_train=dataset_standardized,
-            Y_train=dataset_transformed,
+        model, scaler, dataset_standardized, dataset_transformed = fit_umap_model(
+            df, umap_params, tracker,
         )
 
     return {"embedding": dataset_transformed.tolist()}

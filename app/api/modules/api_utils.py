@@ -64,7 +64,8 @@ def fit_umap_model(df, params, tracker):
     )
 
     try:
-        Y = model.fit_transform(X=dataset_standardized, n_epochs=params.get("n_epochs"))
+        result = model.fit_transform(X=dataset_standardized, n_epochs=params.get("n_epochs"))
+        Y = result[0] if isinstance(result, tuple) else result
         tracker.log_metrics({"training_success": 1})
     except Exception as e:
         logger.warning(f"Custom UMAP failed: {e}. Falling back to umap-learn.")
@@ -75,8 +76,7 @@ def fit_umap_model(df, params, tracker):
             metric=params.get("knn_metric")
         )
         Y = model.fit_transform(dataset_standardized)
-        tracker.log_metrics({"training_success": 0})
-        tracker.log_params({"fallback": True})
+        tracker.log_metrics({"training_success": 0, "fallback": 1})
 
     return model, scaler, dataset_standardized, Y
 
