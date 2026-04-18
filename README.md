@@ -11,25 +11,10 @@ This project implements
 - a front-end website : a friendly interface to send your CSV file to the API and display the results. The frond-end allows the user to set parameters easily and is deployed at `https://umap-streamlit-mmvs.lab.sspcloud.fr`
 
 
-## 🚀 Features
+# For Users
 
-### 📉 Dimensionality Reduction
-Uses UMAP to reduce high-dimensional data into a lower-dimensional space where structure can be more easily visualized. UMAP algorithm can be taken from this repository or from the library `umap-learn`.
 
-### 🔍 Clustering Analysis
-Applies clustering algorithms (e.g., K-Means, DBSCAN) on UMAP embeddings to identify meaningful groups in the data.
-
-### 📊 Comparison with Other Techniques
-Enables comparison of UMAP results with classical methods like PCA or t-SNE.
-
-## 📦 Project Structure
-| Folder              | Description                                                             |
-| ------------------- | ----------------------------------------------------------------------- |
-| `test/`             | Scripts and notebooks for inspecting datasets and testing algorithms.   |
-| `umap_algo/`        | Core UMAP implementation and embedding pipelines.                       |
-| `umap_comparisons/` | Comparisons between UMAP and other dimensionality reduction approaches. |
-
-## 🧠 About UMAP
+## About UMAP
 
 UMAP (Uniform Manifold Approximation and Projection) is a method that:
 
@@ -39,6 +24,32 @@ UMAP (Uniform Manifold Approximation and Projection) is a method that:
 
 * Is widely used for visualization and as a preprocessing step for clustering and other tasks.
 
+
+## Using the website
+
+## Using the API directly
+
+# For Developpers
+
+## Installation
+
+## Project structure
+
+## Backend API using FastAPI
+
+## Frontend Website using Streamlit
+
+## 📚 References that helped us build our algorithms
+
+1. McInnes, Leland; Healy, John; UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction.
+
+2. Wei, Dong; Charikar, Moses; Kai, Li; Efficient k-nearest neighbor graph constructionfor generic similarity measures.
+
+3. [ENSAE Mise en production course](https://ensae-reproductibilite.github.io/)
+
+
+----
+(sort this into the outline)
 ## 📊 Typical Workflow
 
 ### 1. Load high-dimensional dataset
@@ -53,6 +64,20 @@ Run clustering algorithms such as K-Means, DBSCAN, or density-based methods over
 ### 4. Evaluate Results
 Use clustering metrics (e.g., silhouette score) to compare and validate performance.
 
+## 🚀 Features
+
+### 📉 Dimensionality Reduction
+Uses UMAP to reduce high-dimensional data into a lower-dimensional space where structure can be more easily visualized. UMAP algorithm can be taken from this repository or from the library `umap-learn`.
+
+### 🔍 Clustering Analysis
+Applies clustering algorithms (e.g., K-Means, DBSCAN) on UMAP embeddings to identify meaningful groups in the data.
+
+### 📊 Comparison with Other Techniques
+Enables comparison of UMAP results with classical methods like PCA or t-SNE.
+
+# Backend API using FastAPI
+
+# Frontend Website using Streamlit
 
 ## 📌 Example Use
 
@@ -80,7 +105,18 @@ By running this in the main folder, you should get an animation close to this on
 ![til](umap_animation_example.gif)
 
 
-## 🔧 Installation
+# Project Structure
+| Folder              | Description                                                             |
+| ------------------- | ----------------------------------------------------------------------- |
+| `test/`             | Scripts and notebooks for inspecting datasets and testing algorithms.   |
+| `umap_algo/`        | Core UMAP implementation and embedding pipelines.                       |
+| `umap_comparisons/` | Comparisons between UMAP and other dimensionality reduction approaches. |
+
+
+
+
+
+# 🔧 Installation
 
 1. Clone the repository:
 ```
@@ -128,8 +164,4 @@ We plan to demonstrate UMAP clustering on the following datasets:
 Each dataset showcases challenges like varying dimensions and features.
 
 
-## 📚 References that helped us build our algorithms
 
-1. McInnes, Leland; Healy, John; UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction.
-
-2. Wei, Dong; Charikar, Moses; Kai, Li; Efficient k-nearest neighbor graph constructionfor generic similarity measures.
