@@ -1,14 +1,14 @@
 [![PR Tests](https://github.com/victorgalmiche/umap-clustering-mise-en-prod/actions/workflows/tests.yaml/badge.svg)](https://github.com/victorgalmiche/umap-clustering-mise-en-prod/actions/workflows/tests.yaml)
 
-# UMAP-clustering
+# UMAP demonstration platform
 
-UMAP-Clustering is a project that applies Uniform Manifold Approximation and Projection (UMAP) — a modern non-linear dimensionality reduction algorithm — to real-world datasets and combines it with clustering techniques to uncover structure in high-dimensional data.
+`umap-clustering-mise-en-prod` is a project that applies Uniform Manifold Approximation and Projection (UMAP) — a modern non-linear dimensionality reduction algorithm — to real-world datasets and combines it with clustering techniques to uncover structure in high-dimensional data.
 
 UMAP is known for producing meaningful low-dimensional embeddings that preserve local and some global structure of the original data, making it useful not just for visualization but also as a preprocessing step before clustering.
 
 This project implements
 - a backend API : a user can send a CSV file and obtain a low-dimensional embedding of his dataset. The backend is deployed at : `umap-api-mmvs.lab.sspcloud.fr`.
-- a front-end website : a friendly interface to send your CSV file to the API and display the results. The frond-end allows the user to set parameters easily.
+- a front-end website : a friendly interface to send your CSV file to the API and display the results. The frond-end allows the user to set parameters easily and is deployed at `https://umap-streamlit-mmvs.lab.sspcloud.fr`
 
 
 ## 🚀 Features
