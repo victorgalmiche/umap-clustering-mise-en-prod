@@ -129,7 +129,7 @@ def get_polars_from_request(content):
 @app.get("/", tags=["General"], summary="Welcome endpoint")
 def show_welcome_page():
     """Returns basic API metadata."""
-    return {"api": "UMAP API", "version": cfg.api.version, "status": "ready"}
+    return {"api": "UMAP API", "version": app.version, "status": "ready"}
 
 
 @app.get("/health", tags=["General"], summary="Health check endpoint")
@@ -141,7 +141,7 @@ def health_check():
     """
     return {
         "status": "healthy",
-        "version": cfg.api.version,
+        "version": app.version,
         "cached_models": len(model_cache),
         "environment": os.getenv("APP_ENV", "dev"),
     }

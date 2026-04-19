@@ -54,7 +54,7 @@ Upload a CSV file, receive low-dimensional embeddings (classic fit-transform). D
 ### 2. Training (`POST /train`)
 Upload a CSV file to train a new UMAP manifold.
 * **Inputs**: CSV file, UMAP hyperparameters (`n_neighbors`, `min_dist`, etc.).
-* **Output**: A secure `access_key`.
+* **Output**: A secure `access_key` and embeddings.
 * **Side Effect**: Logs parameters and the trained model as a PyFunc artifact in MLflow.
 
 ### 3. Projection (`POST /transform`)

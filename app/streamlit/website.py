@@ -15,8 +15,9 @@ st.set_page_config(
 # --- API STATUS SIDEBAR ---
 def check_api_status():
     try:
-        # Short timeout so the UI doesn't hang if the API is down
-        response = requests.get(API_URL, timeout=2)
+        # Use a timeout so the UI doesn't hang if the API is down
+        # API calls mlflow and this can take ~2s, use a 4s timeout
+        response = requests.get(API_URL, timeout=4)
         if response.status_code == 200:
             return "online"
         return "offline"

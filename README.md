@@ -7,8 +7,10 @@
 UMAP is known for producing meaningful low-dimensional embeddings that preserve local and some global structure of the original data, making it useful not just for visualization but also as a preprocessing step before clustering.
 
 This project implements
-- a backend API : a user can send a CSV file and obtain a low-dimensional embedding of his dataset. The backend is deployed at : `umap-api-mmvs.lab.sspcloud.fr`.
+- a backend API : a user can send a CSV file and obtain a low-dimensional embedding of his dataset. The backend is deployed at : `https://umap-api-mmvs.lab.sspcloud.fr`.
 - a front-end website : a friendly interface to send your CSV file to the API and display the results. The frond-end allows the user to set parameters easily and is deployed at `https://umap-streamlit-mmvs.lab.sspcloud.fr`
+
+Note that there are restrictions on the dataset size that can be currently processed. CSV files should be less than 2M, with no more than 500 lines and only numerical columns.
 
 
 # For Users
@@ -27,19 +29,83 @@ UMAP (Uniform Manifold Approximation and Projection) is a method that:
 
 ## Using the website
 
+The website at `https://umap-streamlit-mmvs.lab.sspcloud.fr` provides a user-friendly interface to our UMAP implementation. There are 4 main steps : 
+
+- **Dataset selection** : use one of the demo datasets (digits, iris, etc.) or upload your own in CSV format (left panel, step 1.)
+- **UMAP parameters** : leave the default parameters or use the sliders to experiment yourself (left panel, step 2.)
+- **Dimensionality reduction** : click the "run UMAP" button to process the dataset. After a few seconds, the website displays the 2D embeddings and offers to download the result in CSV format.
+- **Clustering** (optional) : this step unfolds after dimensionality reduction. Two methods (k-means and HDBSCAN) can be applied to the low-dimensional embeddings, and the result can be downloaded in CSV format.
+
+**Save the reduction function on the server** (Experimental, use at your own risk). The API and the website currently allow to save the reduction function in order to apply it on other data. When the "Save model" checkbox is checked, the "run UMAP" button also returns an access key. Use this in the "Projection" tab to apply the saved model.
+
+
 ## Using the API directly
+
+### 1. Projection (`POST /umap`)
+Upload a CSV file, receive low-dimensional embeddings (classic fit-transform). Does not provide an access key or state persistence.
+
+### 2. Training (`POST /train`)
+Upload a CSV file to train a new UMAP manifold.
+* **Inputs**: CSV file, UMAP hyperparameters (`n_neighbors`, `min_dist`, etc.).
+* **Output**: A secure `access_key` and embeddings.
+* **Side Effect**: Logs parameters and the trained model as a PyFunc artifact in MLflow.
+
+### 3. Projection (`POST /transform`)
+Apply an existing model to new data.
+* **Inputs**: Secure `access_key` and a CSV file with new data.
+* **Output**: Low-dimensional coordinates (embedding).
+* **Benefit**: Ensures the projection is consistent with the original training manifold.
+
+### 4. Health Check (`GET /`)
+Returns API version and status.
+
 
 # For Developpers
 
-## Installation
+## Installation / local API
+
+1. Clone the repository:
+```
+git clone https://github.com/victorgalmiche/umap-clustering-mise-en-prod.git
+
+cd umap-clustering-mise-en-prod
+```
+
+2. Install dependencies:
+```
+pip install uv
+uv sync
+```
+
+3. Serve the API locally:
+```bash
+uv run uvicorn app.api.api:app
+```
+The service will be reachable at `http://127.0.0.1:8000`.  
+Explore the interactive documentation at `http://127.0.0.1:8000/docs`.
+
 
 ## Project structure
 
-## Backend API using FastAPI
+```
+.github/workflows : tests, linting, build Docker images and push to DockerHub
+app/api : FastAPI API backend
+app/streamlit : Streamlit frontend
+docs
+src
+```
 
-## Frontend Website using Streamlit
+## Continuous Integration
 
-## 📚 References that helped us build our algorithms
+## Continuous Deployment on SSPcloud
+
+Deployment is handled by ArgoCD based on the `https://github.com/victorgalmiche/umap-deployment` repository. 
+
+Note that the Streamlit frontend expects a running MLflow service and a running API service and that some URLs are currently hard-coded. 
+
+
+
+# 📚 References that helped us build our algorithms
 
 1. McInnes, Leland; Healy, John; UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction.
 
@@ -75,34 +141,6 @@ Applies clustering algorithms (e.g., K-Means, DBSCAN) on UMAP embeddings to iden
 ### 📊 Comparison with Other Techniques
 Enables comparison of UMAP results with classical methods like PCA or t-SNE.
 
-# Backend API using FastAPI
-
-# Frontend Website using Streamlit
-
-## 📌 Example Use
-
-Below is a minimal Python snippet demonstrating how to run UMAP and a basic clustering:
-
-```
-from umap_algo.umap_class import umap_mapping
-
-from sklearn.datasets import load_iris
-from sklearn.preprocessing import StandardScaler
-
-# Load and preprocess the Iris dataset
-data = load_iris()
-X = data.data
-scaler = StandardScaler()
-X = scaler.fit_transform(X)
-
-# Get an animation of the UMAP algorithm
-umap = umap_mapping(n_neighbors=10, n_components=2, min_dist=0.1)
-Y = umap.fit_transform(X, n_epochs=300, animation=True, labels = data.target)
-```
-
-By running this in the main folder, you should get an animation close to this one:
-
-![til](umap_animation_example.gif)
 
 
 # Project Structure
@@ -114,42 +152,6 @@ By running this in the main folder, you should get an animation close to this on
 
 
 
-
-
-# 🔧 Installation
-
-1. Clone the repository:
-```
-git clone https://github.com/victorgalmiche/umap-clustering-mise-en-prod.git
-
-cd umap-clustering-mise-en-prod
-```
-
-2. Install dependencies:
-```
-pip install uv
-uv sync
-```
-
-3. Start exploring notebooks in `data_exploration/` or run scripts in the main folders.
-
-4. Create a .env file like the .env.dev file
-ENV = dev means you are in a dev envrionment and you want to use dev configs.
-
-ENV = prod means you want to use prod ones.
-
-4. run the script dim_reduction in src/scripts
-```{bash}
-uv run -m src.scripts.dim_reduction
-```
-
-## Maintenance 
-
-1. run a test 
-
-```{bash}
-uv run pytest tests/test_knn.py::TestExactKnnAllPoints
-```
 
 ## 📁 Datasets (Planned)
 
