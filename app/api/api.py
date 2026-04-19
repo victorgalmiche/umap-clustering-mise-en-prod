@@ -75,6 +75,25 @@ def get_s3_fs():
     return s3fs.S3FileSystem(client_kwargs={"endpoint_url": "https://minio.lab.sspcloud.fr"})
 
 
+def cleanup_s3_if_needed(fs: s3fs.S3FileSystem, max_models: int = 100) -> None:
+    """Delete oldest models from S3 if storage exceeds max_models."""
+    model_files = fs.glob(f"s3://{S3_BUCKET}/{S3_MODEL_PREFIX}/*.pkl")
+    
+    if len(model_files) <= max_models:
+        return
+    
+    # Sort by last modified time, oldest first
+    files_with_time = [
+        (path, fs.info(path)["LastModified"]) for path in model_files
+    ]
+    files_with_time.sort(key=lambda x: x[1])
+    
+    n_to_delete = len(model_files) - max_models
+    for path, _ in files_with_time[:n_to_delete]:
+        fs.rm(path)
+        logger.info(f"S3 cleanup: deleted old model {path}")
+
+
 def save_model_to_s3(access_key: str, model_tuple: tuple) -> None:
     """
     Save model tuple (model, scaler, dataset_standardized, Y) to S3.
@@ -95,6 +114,7 @@ def save_model_to_s3(access_key: str, model_tuple: tuple) -> None:
         
         logger.info(f"Model saved to S3: {s3_path}")
         monitor.log_cache_status(f"Model {access_key} persisted to S3")
+        cleanup_s3_if_needed(fs)
     except Exception as e:
         logger.warning(f"Failed to save model to S3: {e}. Model remains in memory cache.")
 
