@@ -1,13 +1,36 @@
 
 # Table of Contents
 
-- [tests](#tests)
-- [tests 2](#tests-2)
-- [test 3](#test-3)
+- [UMAP — Custom Implementation](#umap--custom-implementation)
+  - [Original Authors & Baseline Material](#original-authors--baseline-material)
+  - [Implementation Overview](#implementation-overview)
+    - [1. KNN graph construction — `compute_KNN_graph`](#1-knn-graph-construction--compute_knn_graph)
+    - [2. Local scaling — `rho_sigma`](#2-local-scaling--rho_sigma)
+    - [3. Fuzzy symmetric weights — `compute_adjusted_weights`](#3-fuzzy-symmetric-weights--compute_adjusted_weights)
+    - [4. Fitting `a` and `b` — `find_ab_params`](#4-fitting-a-and-b--find_ab_params)
+    - [5. Spectral initialisation — `spectral_embedding`](#5-spectral-initialisation--spectral_embedding)
+    - [6. Optimisation — `optimize` / `optimize_generator`](#6-optimisation--optimize--optimize_generator)
+    - [7. Projecting new points — `transform`](#7-projecting-new-points--transform)
+  - [Robustness](#robustness)
+    - [Known failure modes](#known-failure-modes)
+    - [Fallback strategy](#fallback-strategy)
+  - [Tests](#tests)
+    - [`TestInitializeWithBarycenter`](#testinitializewithbarycenter)
+    - [`TestCrossWeights`](#testcrossweights)
+    - [`TestTransform`](#testtransform)
+    - [`TestAttractiveForce`](#testattractiveforce)
+    - [`TestRepulsiveForce`](#testrepulsiveforce)
+    - [`TestFindAbParams`](#testfindabparams)
+    - [`TestSpectralEmbedding`](#testspectralembedding)
+- [Reference](#reference)
+
+---
 
 # UMAP — Custom Implementation
 
 This document describes the `umap_mapping` class, a hand-rolled implementation of the UMAP (Uniform Manifold Approximation and Projection) algorithm [[1]](#references). 
+
+---
 
 ## Original Authors & Baseline Material
 The initial class is the result of a joint effort :
@@ -23,8 +46,6 @@ The initial class is the result of a joint effort :
 ## Implementation Overview
 
 The class follows the five canonical stages of UMAP, exposed through `fit_transform`:
-
-
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -63,45 +84,127 @@ Neighbours and distances are packed into a `scipy.sparse.csr_matrix` to keep mem
 
 ### 2. Local scaling — `rho_sigma`
 
-For each point `i`, the class computes:
+For each point $i$, the class computes:
 
-- `ρ_i` — distance to the nearest non-self neighbour (ensures local connectivity),
-- `σ_i` — solves the equation `Σ_j exp(-max(0, d_ij - ρ_i) / σ_i) = log2(k)` via `scipy.optimize.root_scalar` (bisection on `[1e-5, 1e5]`).
+- $\rho_i$ — distance to the nearest non-self neighbour (ensures local connectivity),
+- $\sigma_i$ — obtained by solving the following equation:
+
+$$
+\sum_j \exp\left( -\frac{\max(0, d_{ij} - \rho_i)}{\sigma_i} \right) = \log_2(k)
+$$
+
+using `scipy.optimize.root_scalar` (bisection on $\[10^{-5}, 10^5]\$).
 
 This is a direct transcription of Section 3.1 of the UMAP paper.
 
 ### 3. Fuzzy symmetric weights — `compute_adjusted_weights`
 
-Directional weights `w_ij = exp(-max(0, d_ij - ρ_i) / σ_i)` are built in place on the sparse matrix, walking the CSR `indptr` / `data` arrays to avoid any dense intermediate. The symmetric graph is obtained through the **fuzzy set union**:
+Directional weights are defined as:
 
-```
-W_sym = W + Wᵀ - W ⊙ Wᵀ
-```
+$$
+w_{ij} = \exp\left( -\frac{\max(0, d_{ij} - \rho_i)}{\sigma_i} \right)
+$$
+
+They are built in place on the sparse matrix by iterating over the CSR `indptr` and `data` arrays, avoiding any dense intermediate representation.
+
+The symmetric graph is obtained through the **fuzzy set union**:
+
+$$
+W_{\text{sym}} = W + W^\top - W \odot W^\top
+$$
 
 ### 4. Fitting `a` and `b` — `find_ab_params`
 
-The low-dimensional similarity kernel `φ(d) = 1 / (1 + a · d^(2b))` is fitted against the target curve `ψ(d)` (piecewise: constant below `min_dist`, exponential decay above) via `scipy.optimize.curve_fit`. Defaults (`a = 1.9`, `b = 0.79`) are used before fitting so that the class is safe to call piece-by-piece in tests.
+The low-dimensional similarity kernel is defined as:
+
+$$
+\phi(d) = \frac{1}{1 + a \, d^{2b}}
+$$
+
+It is fitted against a target curve  $\psi(d)$, defined piecewise as:
+
+$$
+\psi(d) =
+\begin{cases}
+1 & \text{if } d \leq \text{min\_dist} \\
+\exp\left(-\frac{d - \text{min\_dist}}{\text{spread}}\right) & \text{if } d > \text{min\_dist}
+\end{cases}
+$$
+
+The parameters `a` and `b` are estimated via `scipy.optimize.curve_fit`.
+
+Default values (`a = 1.9`, `b = 0.79`) are used prior to fitting so that the class remains safe to call incrementally in tests. The values learnt during the fit_transform will be used if transforming new points is asked. 
 
 ### 5. Spectral initialisation — `spectral_embedding`
 
-`Y` is initialised from the `n_components` smallest non-trivial eigenvectors of the symmetric normalised Laplacian `L = D^(-1/2) (D - W) D^(-1/2)`, computed with `scipy.sparse.linalg.eigsh(..., which="SM")`. This gives a sensible starting layout that already respects the coarse cluster structure.
+The embedding Y is initialised using the `n_{\text{components}}` smallest non-trivial eigenvectors of the symmetric normalised Laplacian:
+
+$$
+L = D^{-1/2} (D - W) D^{-1/2}
+$$
+
+where:
+- $W$ is the weighted adjacency matrix,
+- $D$ is the diagonal degree matrix with $D_{ii} = \sum_j W_{ij}$.
+
+The eigenvectors are computed using `scipy.sparse.linalg.eigsh(..., which="SM")`.
 
 ### 6. Optimisation — `optimize` / `optimize_generator`
 
-A stochastic gradient descent with **negative sampling** pulls neighbours together and pushes random non-neighbours apart:
+The embedding is refined using stochastic gradient descent with negative sampling.
 
-- **Attractive force** — applied along each edge `(i, j)` of the KNN graph, gated by `np.random.random() > w_ij` so that edges with low weight fire less often. The force follows the gradient of the low-dimensional cross-entropy and is proportional to `w_ij`.
-- **Repulsive force** — `n_neg = 5` negative samples per point per epoch; the force includes an `epsilon` term in the denominator to avoid division by zero when two points collapse.
-- **Learning rate** decays linearly each epoch (`lr ← lr · (1 - 1/n_epochs)`).
+- **Attractive force** — applied along each edge $(i, j) $ of the KNN graph.  
+  The update follows the gradient of the cross-entropy and is proportional to the edge weight $ w_{ij} $.
+
+- **Repulsive force** — for each point $i$, a set of negative samples $j'$ is drawn (`n_neg = 5`).  
+  The repulsive interaction is based on the same kernel:
+
+$$
+\phi(d_{ij'}) = \frac{1}{1 + a \, d_{ij'}^{2b}}
+$$
+
+A small $\varepsilon$ is added to avoid numerical instability when distances become very small.
+
+- **Learning rate schedule** — the learning rate decays linearly over epochs:
+
+$$
+\text{lr}_t = \text{lr}_0 \left(1 - \frac{t}{n_{\text{epochs}}}\right)
+$$
 
 Two variants coexist:
 
 - `optimize` — plain loop, used inside `fit_transform` and `transform`.
-- `optimize_generator` — `yield`s `(Y, epoch)` after every epoch so that `animate_optimization` can plot the evolution frame by frame through `matplotlib.animation.FuncAnimation`.
+- `optimize_generator` — yields Y after every epoch so that `animate_optimization` can plot the evolution frame by frame through `matplotlib.animation.FuncAnimation`.
 
 ### 7. Projecting new points — `transform`
 
 Once `fit_transform` has run, the training data is stored on `self.X_train_` / `self.Y_train_`, and `transform(X_new)` embeds unseen points **without moving the training embedding**. The flow:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                       UMAP : transform                       │
+├──────────────────────────────────────────────────────────────┤
+│    X_new (Unseen Data)                                       │
+│          │                                                   │
+│          ▼                                                   │
+│    [ 1. KNN Search ] ──► (Find neighbors in X_train)         │
+│          │                                                   │
+│          ▼                                                   │
+│    [ 2. Local (ρ, σ) ] ──► (Local scaling for new points)    │
+│          │                                                   │
+│          ▼                                                   │
+│    [ 3. Cross Weights ] ──► (Non-symmetric fuzzy weights)    │
+│          │                                                   │
+│          ▼                                                   │
+│    [ 4. Barycenter Init ] ──► (Position based on Y_train)    │
+│          │                                                   │
+│          ▼                                                   │
+│    [ 5. SGD Optimizer ] ──► (Fine-tuning; Y_train is fixed)  │
+│          │                                                   │
+│          ▼                                                   │
+│    Y_new (New Embedding)                                     │
+└──────────────────────────────────────────────────────────────┘
+```
 
 1. **KNN in the training set** — `exact_knn_all_points(X_new, ..., X_train=self.X_train_)` returns the `k` nearest training points for each new sample.
 2. **Local `ρ`, `σ`** — recomputed for the new points.
@@ -125,11 +228,9 @@ The custom UMAP works well on clean, well-separated data but has **two fragile s
 
 ### Fallback strategy
 
-Because these failures tend to cascade (a bad `σ` breaks the weights, which breaks the Laplacian, which breaks the init), the project-wide policy is:
+The project-wide policy is:
 
-> **When the custom UMAP fails, the API fall back to [`umap-learn`](https://umap-learn.readthedocs.io/) to obtain a trusted embedding.**
-
-**Conclusion:** the relevance of UMAP + clustering has been clearly demonstrated on this project, but the custom algorithm is **not yet production-ready** — it should be treated as a pedagogical re-implementation, and `umap-learn` should be used whenever robustness matters.
+> ⚠️ **When the custom UMAP fails, the API fall back to [`umap-learn`](https://umap-learn.readthedocs.io/) to obtain a trusted embedding.**
 
 ---
 
@@ -171,28 +272,6 @@ The test suite (`test_umap_class.py`) uses `pytest` and parametrised fixtures. T
 - **Clique test** — on a fully connected `K_4`, eigenvectors are orthonormal, orthogonal to the constant vector `𝟙`, and lie in the expected eigenspace (`λ = 4/3`) of the normalised Laplacian.
 
 ---
-
-Advice from Claude : 
-
-### Performance
-- The outer loops in `optimize` / `optimize_generator` are pure Python and are the main bottleneck on anything larger than a few thousand points. Candidates: Numba JIT, Cython, or a vectorised reformulation of the SGD step.
-- The KNN graph construction in `compute_KNN_graph` assembles the sparse matrix through an element-wise `distance_matrix[i, j] = ...` loop, which is inefficient on CSR; building the `(data, indices, indptr)` arrays directly would be substantially faster.
-- `_initialize_with_barycenter` could be vectorised with a single sparse matrix product `(weights @ Y_train) / weights.sum(axis=1)`.
-
-### API / usability
-- Add a `random_state` parameter and thread it through all stochastic steps (NNDescent init, negative sampling, SGD order) for reproducibility.
-- Expose `n_neg`, `learning_rate`, and `n_epochs` defaults as constructor arguments rather than `optimize` arguments.
-- Add a `fit` method (separate from `fit_transform`) to match the scikit-learn API.
-- The hard-coded `[-4, 4]` plotting window in `animate_optimization` should be inferred from the data.
-
-### Testing
-- Add regression tests on the full `fit_transform` pipeline (not just individual methods), checking embedding quality metrics like trustworthiness or neighbourhood preservation.
-- Add tests for the `approx` KNN backend path.
-- Add tests covering the failure modes above, so that future fixes can be verified.
-
-### Documentation
-- Add usage examples (a small notebook) comparing our output to `umap-learn` on a reference dataset.
-- Document the mathematical choices (the exact cross-entropy gradient, the fuzzy-union symmetrisation) with LaTeX alongside the code.
 
 # Reference 
 
