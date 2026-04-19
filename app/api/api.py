@@ -6,8 +6,10 @@ import os
 import secrets
 import logging
 import time
+import pickle
 import hydra
 import umap
+import s3fs
 from typing import Optional
 from pathlib import Path
 
@@ -62,6 +64,68 @@ app = FastAPI(
 
 # Initialize monitoring
 monitor = get_monitor()
+
+# S3 configuration
+S3_BUCKET = "projet-mise-en-prod-umap"
+S3_MODEL_PREFIX = "models"
+
+
+def get_s3_fs():
+    """Initialize S3 file system connection."""
+    return s3fs.S3FileSystem(client_kwargs={"endpoint_url": "https://minio.lab.sspcloud.fr"})
+
+
+def save_model_to_s3(access_key: str, model_tuple: tuple) -> None:
+    """
+    Save model tuple (model, scaler, dataset_standardized, Y) to S3.
+    
+    Parameters
+    ----------
+    access_key : str
+        The access key for the model
+    model_tuple : tuple
+        Tuple of (model, scaler, dataset_standardized, Y)
+    """
+    try:
+        fs = get_s3_fs()
+        s3_path = f"s3://{S3_BUCKET}/{S3_MODEL_PREFIX}/{access_key}.pkl"
+        
+        with fs.open(s3_path, "wb") as f:
+            pickle.dump(model_tuple, f)
+        
+        logger.info(f"Model saved to S3: {s3_path}")
+        monitor.log_cache_status(f"Model {access_key} persisted to S3")
+    except Exception as e:
+        logger.warning(f"Failed to save model to S3: {e}. Model remains in memory cache.")
+
+
+def load_model_from_s3(access_key: str) -> Optional[tuple]:
+    """
+    Load model tuple from S3.
+    
+    Parameters
+    ----------
+    access_key : str
+        The access key for the model
+    
+    Returns
+    -------
+    tuple or None
+        The model tuple if found, None otherwise
+    """
+    try:
+        fs = get_s3_fs()
+        s3_path = f"s3://{S3_BUCKET}/{S3_MODEL_PREFIX}/{access_key}.pkl"
+        
+        if fs.exists(s3_path):
+            with fs.open(s3_path, "rb") as f:
+                model_tuple = pickle.load(f)
+            logger.info(f"Model loaded from S3: {s3_path}")
+            return model_tuple
+        return None
+    except Exception as e:
+        logger.warning(f"Failed to load model from S3: {e}")
+        return None
 
 
 @app.middleware("http")
@@ -180,7 +244,11 @@ async def train_model(
         )
 
     access_key = secrets.token_urlsafe(32)
-    model_cache[access_key] = (model, scaler, dataset_standardized, Y)
+    model_tuple = (model, scaler, dataset_standardized, Y)
+    model_cache[access_key] = model_tuple
+
+    # Persist to S3 for durability and load-balancing support
+    save_model_to_s3(access_key, model_tuple)
 
     # Log cache status outside the training run to avoid nested MLflow runs.
     monitor.log_cache_status(len(model_cache))
@@ -224,11 +292,17 @@ async def transform_data(
     dict
         Contains embedding and metadata
     """
-    if access_key not in model_cache:
-        monitor.log_error("/transform", "invalid_access_key")
-        raise HTTPException(status_code=403, detail="Invalid access_key.")
-
-    model, scaler, _, _ = model_cache[access_key]
+    if access_key in model_cache:
+        model, scaler, _, _ = model_cache[access_key]
+    else:
+        # Try to load from S3 (useful for load-balanced deployments)
+        model_tuple = load_model_from_s3(access_key)
+        if model_tuple is None:
+            monitor.log_error("/transform", "invalid_access_key")
+            raise HTTPException(status_code=403, detail="Invalid access_key.")
+        # Restore to memory cache for this instance
+        model_cache[access_key] = model_tuple
+        model, scaler, _, _ = model_tuple
 
     df, content = await validate_and_read_csv(file=file)
 
