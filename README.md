@@ -116,8 +116,20 @@ A MLflow service is deployed in our project's namespace on SSPcloud. This servic
 
 ## Documentation and contributing
 
-Note that the Streamlit frontend expects a running MLflow service and a running API service and that some URLs are currently hard-coded. 
+The `docs` directory documents each part of the project : 
+```
+docs/API.md
+docs/CICD.md
+docs/CONTRIBUTING.md
+docs/MONITORING.md
+docs/STREAMLIT.md
+docs/UMAP.md
+```
+Please refer to these for further details.
 
+In particular, `docs/CONTRIBUTING.md` proposes a step-by-step procedure for contributions to a repository that is semi-automatically deployed.
+
+Note that the Streamlit frontend expects a running MLflow service and a running API service and that some URLs are currently hard-coded. Version v2.0 will make it easier to modify the deployment settings.
 
 
 # 📚 References that helped us build our algorithms
@@ -127,35 +139,5 @@ Note that the Streamlit frontend expects a running MLflow service and a running 
 2. Wei, Dong; Charikar, Moses; Kai, Li; Efficient k-nearest neighbor graph constructionfor generic similarity measures.
 
 3. [ENSAE Mise en production course](https://ensae-reproductibilite.github.io/)
-
-
-----
-(sort this into the outline)
-## 📊 Typical Workflow
-
-### 1. Load high-dimensional dataset
- Prepare your dataset with relevant features.
-
-### 2. Dimensionality Reduction via UMAP
-Reduce to a lower dimension (e.g., 2D or 10D) while preserving structure.
-
-### 3. Apply Clustering
-Run clustering algorithms such as K-Means, DBSCAN, or density-based methods over the UMAP output.
-
-### 4. Evaluate Results
-Use clustering metrics (e.g., silhouette score) to compare and validate performance.
-
-## 🚀 Features
-
-### 📉 Dimensionality Reduction
-Uses UMAP to reduce high-dimensional data into a lower-dimensional space where structure can be more easily visualized. UMAP algorithm can be taken from this repository or from the library `umap-learn`.
-
-### 🔍 Clustering Analysis
-Applies clustering algorithms (e.g., K-Means, DBSCAN) on UMAP embeddings to identify meaningful groups in the data.
-
-### 📊 Comparison with Other Techniques
-Enables comparison of UMAP results with classical methods like PCA or t-SNE.
-
-
 
 
