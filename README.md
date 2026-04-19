@@ -36,7 +36,7 @@ The website at `https://umap-streamlit-mmvs.lab.sspcloud.fr` provides a user-fri
 - **Dimensionality reduction** : click the "run UMAP" button to process the dataset. After a few seconds, the website displays the 2D embeddings and offers to download the result in CSV format.
 - **Clustering** (optional) : this step unfolds after dimensionality reduction. Two methods (k-means and HDBSCAN) can be applied to the low-dimensional embeddings, and the result can be downloaded in CSV format.
 
-**Save the reduction function on the server** (Experimental, use at your own risk). The API and the website currently allow to save the reduction function in order to apply it on other data. When the "Save model" checkbox is checked, the "run UMAP" button also returns an access key. Use this in the "Projection" tab to apply the saved model.
+**Save the projection function on the server** (Experimental, use at your own risk). The API and the website currently allow to save the projection function in order to apply it on other data. When the "Save model" checkbox is checked, the "run UMAP" button also returns an access key. Use this in the "Projection" tab to apply the saved model.
 
 
 ## Using the API directly
@@ -91,15 +91,30 @@ Explore the interactive documentation at `http://127.0.0.1:8000/docs`.
 .github/workflows : tests, linting, build Docker images and push to DockerHub
 app/api : FastAPI API backend
 app/streamlit : Streamlit frontend
-docs
-src
+docs : documentation
+src : source code for UMAP
 ```
 
 ## Continuous Integration
 
+On every push to Github, we use Actions to run tests and linters. If the tests are successful and the push was on the `main` branch, two Docker images are built and pushed to DockerHub : 
+- `slithiaote/umap-api` : runs the FastAPI server
+- `slithiaote/umap-streamlit` : runs the Streamlit server
+
+
 ## Continuous Deployment on SSPcloud
 
 Deployment is handled by ArgoCD based on the `https://github.com/victorgalmiche/umap-deployment` repository. 
+- `slithiaote/umap-api` is deployed to `https://umap-api-mmvs.lab.sspcloud.fr`
+- `slithiaote/umap-streamlit` is deployed to `https://umap-streamlit-mmvs.lab.sspcloud.fr`
+
+## Monitoring and model repository
+
+A MLflow service is deployed in our project's namespace on SSPcloud. This service is used to 
+- monitor calls and ressource usage of the API,
+- store access keys and the corresponding projection function.
+
+## Documentation and contributing
 
 Note that the Streamlit frontend expects a running MLflow service and a running API service and that some URLs are currently hard-coded. 
 
@@ -141,29 +156,6 @@ Applies clustering algorithms (e.g., K-Means, DBSCAN) on UMAP embeddings to iden
 ### 📊 Comparison with Other Techniques
 Enables comparison of UMAP results with classical methods like PCA or t-SNE.
 
-
-
-# Project Structure
-| Folder              | Description                                                             |
-| ------------------- | ----------------------------------------------------------------------- |
-| `test/`             | Scripts and notebooks for inspecting datasets and testing algorithms.   |
-| `umap_algo/`        | Core UMAP implementation and embedding pipelines.                       |
-| `umap_comparisons/` | Comparisons between UMAP and other dimensionality reduction approaches. |
-
-
-
-
-## 📁 Datasets (Planned)
-
-We plan to demonstrate UMAP clustering on the following datasets:
-
-* Socio-economic and health description of countries (~9 dimensions)
-
-* NYC Yellow Taxi Trip Data (~18 dimensions)
-
-* French cities socio-economic indicators (~54 dimensions)
-
-Each dataset showcases challenges like varying dimensions and features.
 
 
 
