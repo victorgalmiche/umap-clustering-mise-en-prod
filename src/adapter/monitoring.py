@@ -149,6 +149,82 @@ class ApplicationMonitor:
                 }
             )
 
+    def log_request(self, endpoint: str, method: str, status_code: int, latency_ms: float) -> None:
+        """
+        Log a successful HTTP request with latency and status code.
+
+        This method records request-level metrics in MLflow, including latency,
+        HTTP status code, and a success indicator.
+
+        Parameters
+        ----------
+        endpoint : str
+            API endpoint path (e.g., '/train', '/transform')
+        method : str
+            HTTP method used for the request (e.g., 'GET', 'POST')
+        status_code : int
+            HTTP response status code (e.g., 200, 404, 500)
+        latency_ms : float
+            Request processing time in milliseconds
+
+        Returns
+        -------
+        None
+            This method does not return anything. Metrics are logged to MLflow.
+
+        Notes
+        -----
+        - A request is considered successful if status_code < 400
+        - Metrics logged:
+            - latency_ms
+            - success (1 or 0)
+        - Tags:
+            - endpoint
+            - method
+            - status_code
+        """
+        run_name = f"{method}-{endpoint.lstrip('/')}"
+        with mlflow.start_run(run_name=run_name):
+            mlflow.set_tag("endpoint", endpoint)
+            mlflow.set_tag("method", method)
+            mlflow.set_tag("status_code", status_code)
+            mlflow.log_metric("latency_ms", latency_ms)
+            mlflow.log_metric("success", 1 if status_code < 400 else 0)
+
+    def log_request_error(self, endpoint: str, method: str) -> None:
+        """
+        Log a failed HTTP request.
+
+        This method is typically used in exception handlers or middleware when
+        a request raises an unhandled error.
+
+        Parameters
+        ----------
+        endpoint : str
+            API endpoint path where the error occurred (e.g., '/train')
+        method : str
+            HTTP method used for the request (e.g., 'GET', 'POST')
+
+        Returns
+        -------
+        None
+            This method does not return anything. Error metrics are logged to MLflow.
+
+        Notes
+        -----
+        - This method logs a single metric:
+            - error = 1
+        - Tags:
+            - endpoint
+            - method
+        - Does not include latency (should be handled separately if needed)
+        """
+        run_name = f"{method}-{endpoint.lstrip('/')}"
+        with mlflow.start_run(run_name=run_name):
+            mlflow.set_tag("endpoint", endpoint)
+            mlflow.set_tag("method", method)
+            mlflow.log_metric("error", 1)
+
 
 # Singleton instance
 _monitor: Optional[ApplicationMonitor] = None

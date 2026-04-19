@@ -50,6 +50,7 @@ def wait_for_api(host="127.0.0.1", port=8000, timeout=10):
             time.sleep(1)
     raise RuntimeError("The API has not started")
 
+
 @pytest.fixture(scope="session", autouse=True)
 def start_api():
     proc = subprocess.Popen(
