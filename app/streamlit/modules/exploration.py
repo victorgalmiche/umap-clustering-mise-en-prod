@@ -118,7 +118,9 @@ def render():
 
             with col2:
                 st.subheader("UMAP Visualization")
-                plot_utils.show_embeddings(embedding=embedding, data_to_embed=data_to_embed, target_column=target_column)
+                plot_utils.show_embeddings(
+                    embedding=embedding, data_to_embed=data_to_embed, target_column=target_column
+                )
 
             download_df = pd.DataFrame(embedding, columns=[f"dim_{i}" for i in range(embedding.shape[1])])
             csv = download_df.to_csv(index=False).encode()

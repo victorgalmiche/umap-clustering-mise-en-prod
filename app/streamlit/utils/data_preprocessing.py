@@ -29,11 +29,7 @@ def load_and_sample(df):
 
 
 def fetch_data_source():
-    return st.sidebar.radio(
-        "Data Selection (for training)",
-        ["Standard Datasets", "Upload CSV"],
-        on_change=reset_state
-    )
+    return st.sidebar.radio("Data Selection (for training)", ["Standard Datasets", "Upload CSV"], on_change=reset_state)
 
 
 def fetch_data_transform():
@@ -41,7 +37,7 @@ def fetch_data_transform():
         "Select CSV file for transform",
         type=["csv"],
         help="Upload the new data points you wish to project.",
-        on_change=reset_state
+        on_change=reset_state,
     )
 
 
