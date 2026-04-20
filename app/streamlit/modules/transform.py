@@ -35,9 +35,7 @@ def render() -> None:
         "💡 **Requirement:** Your CSV must contain the same numerical features (columns and column names) as your training data."
     )
 
-    new_data_file = st.file_uploader(
-        "Select CSV file", type=["csv"], help="Upload the new data points you wish to project."
-    )
+    new_data_file = data_utils.fetch_data_transform()
 
     if new_data_file is not None:
         df_new, new_target_column = data_utils.fetch_csv_file(new_data_file, suffix_key="_transform")
@@ -140,7 +138,7 @@ def render() -> None:
             st.metric(
                 label="Cluster Quality (Silhouette Score)",
                 value=f"{sil_score:.4f}",
-                help="Measures how similar an object is to its own cluster compared to other clusters.",
+                help="How well clusters are separated (higher is better, max=1)",
             )
 
         plot_utils.show_clusters(embedding=new_emb, labels=new_labels)

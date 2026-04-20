@@ -13,7 +13,7 @@ def check_api_status():
     try:
         # Use a timeout so the UI doesn't hang if the API is down
         # API calls mlflow and this can take ~2s, use a 4s timeout
-        response = requests.get(API_URL, timeout=4)
+        response = requests.get(API_URL, timeout=10)
         if response.status_code == 200:
             return "online"
         return "offline"
