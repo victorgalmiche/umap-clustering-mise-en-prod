@@ -145,7 +145,7 @@ class ApplicationMonitor:
         metrics = {
             "cached_models": cache_size,
             "cache_utilization_pct": (cache_size / max_models) * 100,
-            }
+        }
 
         if s3_model_count is not None:
             metrics["s3_stored_models"] = s3_model_count
