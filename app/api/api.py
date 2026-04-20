@@ -12,6 +12,7 @@ import umap
 import s3fs
 from typing import Optional
 from pathlib import Path
+from datetime import datetime, timedelta, timezone
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Header, Request, Depends
 
@@ -75,23 +76,20 @@ def get_s3_fs():
     return s3fs.S3FileSystem(client_kwargs={"endpoint_url": "https://minio.lab.sspcloud.fr"})
 
 
-def cleanup_s3_if_needed(fs: s3fs.S3FileSystem, max_models: int = 100) -> None:
-    """Delete oldest models from S3 if storage exceeds max_models."""
+def cleanup_s3_if_needed(fs: s3fs.S3FileSystem, max_age_days: int = 7) -> None:
+    """Delete models from S3 that are older than max_age_days."""
     model_files = fs.glob(f"s3://{S3_BUCKET}/{S3_MODEL_PREFIX}/*.pkl")
-    
-    if len(model_files) <= max_models:
+
+    if not model_files:
         return
-    
-    # Sort by last modified time, oldest first
-    files_with_time = [
-        (path, fs.info(path)["LastModified"]) for path in model_files
-    ]
-    files_with_time.sort(key=lambda x: x[1])
-    
-    n_to_delete = len(model_files) - max_models
-    for path, _ in files_with_time[:n_to_delete]:
-        fs.rm(path)
-        logger.info(f"S3 cleanup: deleted old model {path}")
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=max_age_days)
+
+    for path in model_files:
+        last_modified = fs.info(path)["LastModified"]
+        if last_modified < cutoff:
+            fs.rm(path)
+            logger.info(f"S3 cleanup: deleted old model {path} (last modified: {last_modified})")
 
 
 def save_model_to_s3(access_key: str, model_tuple: tuple) -> None:
