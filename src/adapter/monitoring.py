@@ -34,9 +34,9 @@ class ApplicationMonitor:
 
         try:
             mlflow.set_experiment(self.experiment_name)
-            logger.info(f"Monitoring initialized with experiment: {self.experiment_name}")
-        except Exception as e:
-            logger.error(f"Failed to initialize monitoring: {e}")
+            logger.info("Monitoring initialized with experiment: %s", self.experiment_name)
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logger.error("Failed to initialize monitoring: %s", e)
 
     @contextmanager
     def track_request(self, endpoint: str, method: str):
@@ -67,7 +67,7 @@ class ApplicationMonitor:
             metrics["success"] = 1
         except Exception as e:
             metrics["error"] = 1
-            logger.error(f"Request error on {method} {endpoint}: {str(e)}")
+            logger.error("Request error on %s %s: %s", method, endpoint, e)
             raise
         finally:
             latency = (time.time() - start_time) * 1000  # Convert to ms
@@ -126,7 +126,7 @@ class ApplicationMonitor:
             mlflow.set_tag("error_type", error_type)
             mlflow.set_tag("critical", str(is_critical))
             mlflow.log_metric("error_count", 1)
-            logger.warning(f"Error on {endpoint}: {error_type} (critical={is_critical})")
+            logger.warning("Error on %s: %s (critical=%s)", endpoint, error_type, is_critical)
 
     def log_cache_status(self, cache_size: int, max_models: int = 100):
         """
@@ -227,12 +227,12 @@ class ApplicationMonitor:
 
 
 # Singleton instance
-_monitor: Optional[ApplicationMonitor] = None
+_monitor: Optional[ApplicationMonitor] = None  # pylint: disable=invalid-name
 
 
 def get_monitor() -> ApplicationMonitor:
     """Get or create the global monitor instance."""
-    global _monitor
+    global _monitor  # pylint: disable=global-statement
     if _monitor is None:
         _monitor = ApplicationMonitor()
     return _monitor
