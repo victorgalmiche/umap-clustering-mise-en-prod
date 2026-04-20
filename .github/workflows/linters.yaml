@@ -34,7 +34,7 @@ jobs:
       
       - name: ruff formatting
         run : |
-          uv run ruff format src/
+          uv run ruff format src/ app/ tests/
 
       - name: Commit and push formatted code
         run: |
