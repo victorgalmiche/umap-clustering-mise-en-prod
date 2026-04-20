@@ -29,7 +29,8 @@ def fetch_data_source():
 
 
 def fetch_csv_file(
-    data_file: UploadedFile | None, suffix_key: str,
+    data_file: UploadedFile | None,
+    suffix_key: str,
 ) -> tuple[pd.DataFrame, str | None]:
 
     if not suffix_key:

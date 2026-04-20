@@ -5,8 +5,8 @@ import plotly.express as px
 
 
 def show_embeddings(
-    embedding: np.ndarray, 
-    data_to_embed: pd.DataFrame, 
+    embedding: np.ndarray,
+    data_to_embed: pd.DataFrame,
     target_column: str | None,
 ) -> None:
     """
@@ -17,8 +17,8 @@ def show_embeddings(
 
     Parameters
     ----------
-    embedding : 2D array of shape (n_samples, n_components) 
-    data_to_embed : Original DataFrame the embedding was computed from. 
+    embedding : 2D array of shape (n_samples, n_components)
+    data_to_embed : Original DataFrame the embedding was computed from.
     target_column : Name of the column in ``data_to_embed`` used to color the points.
         If None, all points are drawn with a single color.
     """
@@ -29,12 +29,9 @@ def show_embeddings(
         if target_column:
             plot_df[target_column] = data_to_embed[target_column].astype(str)
         fig = px.scatter(plot_df, x="x", y="y", color=target_column)
-        st.plotly_chart(fig, width='stretch')
+        st.plotly_chart(fig, width="stretch")
     else:
-        st.warning(
-            f"Visualization is only supported in 2D "
-            f"(current dimensions : {shape})."
-        )
+        st.warning(f"Visualization is only supported in 2D (current dimensions : {shape}).")
 
 
 def show_clusters(embedding: np.ndarray, labels: np.ndarray):
@@ -53,15 +50,8 @@ def show_clusters(embedding: np.ndarray, labels: np.ndarray):
 
     shape = embedding.shape[1]
     if shape == 2:
-        plot_df = pd.DataFrame({
-            "x": embedding[:, 0],
-            "y": embedding[:, 1],
-            "cluster": labels.astype(str)
-        })
+        plot_df = pd.DataFrame({"x": embedding[:, 0], "y": embedding[:, 1], "cluster": labels.astype(str)})
         fig = px.scatter(plot_df, x="x", y="y", color="cluster")
-        st.plotly_chart(fig, width='stretch')
+        st.plotly_chart(fig, width="stretch")
     else:
-        st.warning(
-            f"Visualization is only supported in 2D "
-            f"(current dimensions : {shape})."
-        )
+        st.warning(f"Visualization is only supported in 2D (current dimensions : {shape}).")
