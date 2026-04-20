@@ -128,7 +128,7 @@ class ApplicationMonitor:
             mlflow.log_metric("error_count", 1)
             logger.warning(f"Error on {endpoint}: {error_type} (critical={is_critical})")
 
-    def log_cache_status(self, cache_size: int, max_models: int = 100):
+    def log_cache_status(self, cache_size: int, max_models: int = 100, s3_model_count: Optional[int] = None):
         """
         Log model cache status.
 
@@ -138,16 +138,21 @@ class ApplicationMonitor:
             Current number of cached models
         max_models : int
             Maximum models allowed in cache
+        s3_model_count : int, optional
+            Current number of models stored in S3
         """
         run_name = f"cache_status-{cache_size}_{max_models}"
+        metrics = {
+            "cached_models": cache_size,
+            "cache_utilization_pct": (cache_size / max_models) * 100,
+            }
+
+        if s3_model_count is not None:
+            metrics["s3_stored_models"] = s3_model_count
+
         with mlflow.start_run(run_name=run_name):
             mlflow.set_tag("metric_type", "cache_status")
-            mlflow.log_metrics(
-                {
-                    "cached_models": cache_size,
-                    "cache_utilization_pct": (cache_size / max_models) * 100,
-                }
-            )
+            mlflow.log_metrics(metrics)
 
     def log_request(self, endpoint: str, method: str, status_code: int, latency_ms: float) -> None:
         """

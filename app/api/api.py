@@ -90,6 +90,9 @@ def cleanup_s3_if_needed(fs: s3fs.S3FileSystem, max_age_days: int = 7) -> None:
         if last_modified < cutoff:
             fs.rm(path)
             logger.info(f"S3 cleanup: deleted old model {path} (last modified: {last_modified})")
+    
+    remaining = len(fs.glob(f"s3://{S3_BUCKET}/{S3_MODEL_PREFIX}/*.pkl"))
+    return len(remaining)
 
 
 def save_model_to_s3(access_key: str, model_tuple: tuple) -> None:
@@ -111,8 +114,8 @@ def save_model_to_s3(access_key: str, model_tuple: tuple) -> None:
             pickle.dump(model_tuple, f)
         
         logger.info(f"Model saved to S3: {s3_path}")
-        monitor.log_cache_status(f"Model {access_key} persisted to S3")
-        cleanup_s3_if_needed(fs)
+        s3_model_count = cleanup_s3_if_needed(fs)
+        monitor.log_cache_status(len(model_cache), s3_model_count=s3_model_count)    
     except Exception as e:
         logger.warning(f"Failed to save model to S3: {e}. Model remains in memory cache.")
 
