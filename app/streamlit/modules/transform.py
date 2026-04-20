@@ -8,7 +8,7 @@ import app.streamlit.utils.hyperparameters as param_utils
 import app.streamlit.utils.visualization as plot_utils
 
 
-def render()->None:
+def render() -> None:
     """
     Render the UI for the /transform endpoint (Model Inference).
     """
