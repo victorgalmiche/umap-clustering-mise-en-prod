@@ -36,9 +36,6 @@ class umap_mapping:
         self.a = 1.9
         self.b = 0.79
 
-        self.Y_train_ = np.array([])
-        self.X_train_ = np.array([])
-
     def compute_KNN_graph(self, X: np.ndarray) -> sp.csr_matrix:
         """
         Create a KNN graph from data X
