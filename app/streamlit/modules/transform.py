@@ -8,7 +8,7 @@ import app.streamlit.utils.hyperparameters as param_utils
 import app.streamlit.utils.visualization as plot_utils
 
 
-def render()->None:
+def render() -> None:
     """
     Render the UI for the /transform endpoint (Model Inference).
     """
@@ -24,19 +24,19 @@ def render()->None:
         "Access Key",
         value=saved_key,
         type="password",
-        help="The unique ID generated when you saved your model in the Train tab."
+        help="The unique ID generated when you saved your model in the Train tab.",
     )
     if not access_key:
         st.warning("Please enter an Access Key to proceed.")
 
     # --- 2. New Data Upload ---
     st.subheader("1. Upload New Samples")
-    st.info("💡 **Requirement:** Your CSV must contain the same numerical features (columns and column names) as your training data.")
+    st.info(
+        "💡 **Requirement:** Your CSV must contain the same numerical features (columns and column names) as your training data."
+    )
 
     new_data_file = st.file_uploader(
-        "Select CSV file",
-        type=["csv"],
-        help="Upload the new data points you wish to project."
+        "Select CSV file", type=["csv"], help="Upload the new data points you wish to project."
     )
 
     if new_data_file is not None:
@@ -54,7 +54,7 @@ def render()->None:
         min_value=1,
         max_value=200,
         value=100,
-        help="How many iterations to run to find the best placement for new points. More epochs = higher precision but slower."
+        help="How many iterations to run to find the best placement for new points. More epochs = higher precision but slower.",
     )
 
     # --- 4. Execution & Results ---
@@ -72,9 +72,7 @@ def render()->None:
         with st.spinner("🔄 Projecting points into latent space..."):
             try:
                 new_emb = emb_utils.run_umap_transform(
-                    df=df_to_transform,
-                    access_key=access_key,
-                    n_epochs=n_epochs_trans
+                    df=df_to_transform, access_key=access_key, n_epochs=n_epochs_trans
                 )
                 st.session_state["new_embedding"] = new_emb
                 st.success(f"Successfully transformed {len(df_new)} points.")
@@ -83,34 +81,27 @@ def render()->None:
 
     if "new_embedding" in st.session_state:
         new_emb = st.session_state["new_embedding"]
-        
+
         st.divider()
 
         # --- 5. Visualization ---
         st.subheader("3. Projection Results")
-        
+
         col_viz, col_dl = st.columns([3, 1])
-        
+
         with col_viz:
-            plot_utils.show_embeddings(
-                embedding=new_emb,
-                data_to_embed=df_new,
-                target_column=new_target_column
-            )
+            plot_utils.show_embeddings(embedding=new_emb, data_to_embed=df_new, target_column=new_target_column)
 
         with col_dl:
             st.write("#### Export")
-            new_csv_data = pd.DataFrame(
-                new_emb,
-                columns=[f"dim_{i}" for i in range(new_emb.shape[1])]
-            ).to_csv(index=False).encode()
+            new_csv_data = (
+                pd.DataFrame(new_emb, columns=[f"dim_{i}" for i in range(new_emb.shape[1])])
+                .to_csv(index=False)
+                .encode()
+            )
 
             st.download_button(
-                "📥 Download CSV",
-                new_csv_data,
-                "projected_data.csv",
-                "text/csv",
-                use_container_width=True
+                "📥 Download CSV", new_csv_data, "projected_data.csv", "text/csv", use_container_width=True
             )
 
         # -----------------------------
@@ -125,9 +116,7 @@ def render()->None:
             new_clustering_method = param_utils.select_clustering_method(key_suffix="_transform")
         with c2:
             new_clustering_param = param_utils.select_clustering_param(
-                clustering_method=new_clustering_method,
-                n_samples=len(new_emb),
-                key_suffix="_transform"
+                clustering_method=new_clustering_method, n_samples=len(new_emb), key_suffix="_transform"
             )
 
         if st.button("🪄 Run Clustering", key="new_run_clustering", use_container_width=True):
@@ -149,9 +138,9 @@ def render()->None:
         if len(set(new_labels)) >= 2:
             sil_score = silhouette_score(new_emb, new_labels)
             st.metric(
-                label="Cluster Quality (Silhouette Score)", 
+                label="Cluster Quality (Silhouette Score)",
                 value=f"{sil_score:.4f}",
-                help="Measures how similar an object is to its own cluster compared to other clusters."
+                help="Measures how similar an object is to its own cluster compared to other clusters.",
             )
 
         plot_utils.show_clusters(embedding=new_emb, labels=new_labels)
@@ -161,9 +150,5 @@ def render()->None:
 
         final_csv = result_df.to_csv(index=False).encode()
         st.download_button(
-            "📥 Download Projected Clusters",
-            final_csv,
-            "projected_clusters.csv", 
-            "text/csv",
-            use_container_width=True
+            "📥 Download Projected Clusters", final_csv, "projected_clusters.csv", "text/csv", use_container_width=True
         )

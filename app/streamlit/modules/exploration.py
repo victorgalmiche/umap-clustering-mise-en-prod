@@ -39,7 +39,9 @@ def render():
     # 2. UMAP parameters
     # -----------------------------
     st.sidebar.header("2. UMAP Parameters")
-    st.sidebar.info("**Tip:** Adjust 'n_neighbors' to balance local vs. global structure. Lower values focus on local detail.")
+    st.sidebar.info(
+        "**Tip:** Adjust 'n_neighbors' to balance local vs. global structure. Lower values focus on local detail."
+    )
 
     param_utils.default_umap_params()
     umap_params = param_utils.select_umap_params(n_valid_columns)
@@ -50,7 +52,9 @@ def render():
     st.header("Step 1: Dimensionality Reduction (UMAP)")
     st.markdown("Project your high-dimensional features into a low-dimensional space for visualization.")
 
-    save_model = st.checkbox("💾 Save model (Experimental)", help="Save the UMAP transformer to apply it to new data later.")
+    save_model = st.checkbox(
+        "💾 Save model (Experimental)", help="Save the UMAP transformer to apply it to new data later."
+    )
 
     if st.button("🚀 Run UMAP"):
         if target_column is not None:
@@ -69,7 +73,7 @@ def render():
                     knn_metric=umap_params["knn_metric"],
                     knn_method=umap_params["knn_method"],
                     n_epochs=umap_params["n_epochs"],
-                    mode="train"
+                    mode="train",
                 )
             else:
                 embedding = emb_utils.run_umap_api(
@@ -80,7 +84,7 @@ def render():
                     knn_metric=umap_params["knn_metric"],
                     knn_method=umap_params["knn_method"],
                     n_epochs=umap_params["n_epochs"],
-                    mode="umap"
+                    mode="umap",
                 )
 
         st.session_state["embedding"] = embedding
@@ -101,25 +105,19 @@ def render():
         with col1:
             st.subheader("Performance")
             trust = trustworthiness(
-                data_to_embed,
-                embedding,
-                metric=umap_params["knn_metric"],
-                n_neighbors=umap_params["n_neighbors"]
+                data_to_embed, embedding, metric=umap_params["knn_metric"], n_neighbors=umap_params["n_neighbors"]
             )
-            st.metric(label="Trustworthiness Score", value=f"{trust:.4f}", help="Measures to what extent the local structure is retained.")
+            st.metric(
+                label="Trustworthiness Score",
+                value=f"{trust:.4f}",
+                help="Measures to what extent the local structure is retained.",
+            )
 
         with col2:
             st.subheader("UMAP Visualization")
-            plot_utils.show_embeddings(
-                embedding=embedding,
-                data_to_embed=data_to_embed,
-                target_column=target_column
-            )
+            plot_utils.show_embeddings(embedding=embedding, data_to_embed=data_to_embed, target_column=target_column)
 
-        download_df = pd.DataFrame(
-            embedding,
-            columns=[f"dim_{i}" for i in range(embedding.shape[1])]
-        )
+        download_df = pd.DataFrame(embedding, columns=[f"dim_{i}" for i in range(embedding.shape[1])])
         csv = download_df.to_csv(index=False).encode()
         st.download_button("📥 Download reduced coordinates", csv, "embedding.csv", "text/csv")
 
@@ -136,9 +134,8 @@ def render():
             clustering_method = param_utils.select_clustering_method(key_suffix="_explore")
         with c_col2:
             clustering_param = param_utils.select_clustering_param(
-                clustering_method=clustering_method,
-                n_samples=len(embedding),
-                key_suffix="_explore")
+                clustering_method=clustering_method, n_samples=len(embedding), key_suffix="_explore"
+            )
 
         if st.button("🪄 Run Clustering", key="run_clustering"):
             with st.spinner("Finding patterns..."):
@@ -162,7 +159,11 @@ def render():
         with col1:
             if len(set(labels)) >= 2:
                 sil_score = silhouette_score(embedding, labels)
-                st.metric(label="Silhouette Score", value=f"{sil_score:.4f}", help="Closer to 1 means clusters are well-separated.")
+                st.metric(
+                    label="Silhouette Score",
+                    value=f"{sil_score:.4f}",
+                    help="Closer to 1 means clusters are well-separated.",
+                )
             else:
                 st.warning("Only one cluster has been found, try again using other parameters")
         with col2:
@@ -173,8 +174,4 @@ def render():
         result_df["cluster"] = labels
 
         csv = result_df.to_csv(index=False).encode()
-        st.download_button(
-            "📥 Download embedding + clusters",
-            csv,
-            "embedding_clusters.csv", "text/csv"
-        )
+        st.download_button("📥 Download embedding + clusters", csv, "embedding_clusters.csv", "text/csv")

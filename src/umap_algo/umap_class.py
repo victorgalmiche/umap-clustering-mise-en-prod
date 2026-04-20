@@ -1,3 +1,5 @@
+"""UMAP class"""
+
 # Data Structure
 from collections.abc import Generator
 
@@ -14,6 +16,8 @@ from .nn_descent import approx_knn_all_points
 
 
 class umap_mapping:
+    """UMAP class"""
+
     def __init__(
         self,
         n_neighbors: int = 15,
@@ -31,6 +35,9 @@ class umap_mapping:
         # Taking default values for a and b, replaced later by fitting
         self.a = 1.9
         self.b = 0.79
+
+        self.Y_train_ = None
+        self.X_train_ = None
 
     def compute_KNN_graph(self, X: np.ndarray) -> sp.csr_matrix:
         """
@@ -133,6 +140,9 @@ class umap_mapping:
     def attractive_force(
         self, y_i: np.ndarray, y_j: np.ndarray, weight_ij: float
     ) -> np.ndarray:  # See Part 3.2 https://arxiv.org/pdf/1802.03426
+        """
+        Attractive force computation
+        """
         return (
             (-2 * self.a * self.b * np.linalg.norm(y_i - y_j) ** (2 * self.b - 2))
             / (1 + self.a * np.linalg.norm(y_i - y_j) ** (2 * self.b))
@@ -143,6 +153,7 @@ class umap_mapping:
     def repulsive_force(
         self, y_i: np.ndarray, y_j: np.ndarray, weight_ij: float, epsilon: float = 1e-3
     ) -> np.ndarray:  # See Part 3.2 https://arxiv.org/pdf/1802.03426
+        """Repulsive Froe computation"""
         return (
             (2 * self.b)
             / ((epsilon + np.linalg.norm(y_i - y_j) ** 2) * (1 + self.a * np.linalg.norm(y_i - y_j) ** (2 * self.b)))
@@ -168,6 +179,7 @@ class umap_mapping:
         """
 
         def curve(d: np.ndarray, a: float, b: float) -> np.ndarray:
+            """curve function"""
             return 1 / (1 + a * d ** (2 * b))
 
         d = distance_matrix.data.astype(np.float64)
@@ -183,11 +195,11 @@ class umap_mapping:
         deg = np.asarray(weights.sum(axis=1)).ravel()
 
         D = sp.diags(deg)
-        D_inv_sqrt = sp.diags(1 / np.sqrt(deg))
+        d_inv_sqrt = sp.diags(1 / np.sqrt(deg))
 
-        L = D_inv_sqrt.dot(D - weights).dot(D_inv_sqrt)
+        L = d_inv_sqrt.dot(D - weights).dot(d_inv_sqrt)
 
-        eigvals, eigvecs = sp.linalg.eigsh(L, k=self.n_components + 1, which="SM")
+        _, eigvecs = sp.linalg.eigsh(L, k=self.n_components + 1, which="SM")
 
         return eigvecs[:, 1 : self.n_components + 1]
 
@@ -367,12 +379,12 @@ class umap_mapping:
         last_state = {"Y": Y}
 
         def update(frame: tuple[np.ndarray, int]):
-            Y_current, epoch = frame
-            scat.set_offsets(Y_current)
+            y_current, epoch = frame
+            scat.set_offsets(y_current)
             ax.set_title(f"UMAP optimization - epoch {epoch}")
 
             # 🔥 stocke le dernier Y
-            last_state["Y"] = Y_current.copy()
+            last_state["Y"] = y_current.copy()
 
             return (scat,)
 

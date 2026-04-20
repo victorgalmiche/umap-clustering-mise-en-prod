@@ -1,5 +1,9 @@
+"""Module for Managing Mlflow"""
+
 import logging
 import os
+import tempfile
+
 from contextlib import contextmanager
 from pathlib import Path
 from dotenv import load_dotenv
@@ -8,13 +12,16 @@ import mlflow
 import mlflow.models
 import mlflow.pyfunc
 import numpy as np
-import tempfile
 
 logger = logging.getLogger(Path(__file__).stem)
 load_dotenv(override=True)
 
 
 class ExperimentTracker:
+    """
+    MLflow wrapper for experiment tracking.
+    """
+
     def __init__(
         self, experiment_name: str, run_name: str | None = None, run_tags: dict[str, str] | None = None
     ) -> None:
@@ -37,17 +44,19 @@ class ExperimentTracker:
             exp = mlflow.set_experiment(self.experiment_name)
             self.experiment_id = exp.experiment_id
         except Exception as e:
-            logger.error(f"Erreur lors de la connexion à MLflow: {e}")
+            logger.error("Erreur lors de la connexion à MLflow: %s", e)
             raise
 
         self.run_tags = run_tags
         self.run_name = run_name
         self.current_run_id = None
 
-        logger.info(f"Connecté au serveur MLflow distant: {self.tracking_uri}")
+        logger.info("Connected to Mlflow server: %s", self.tracking_uri)
 
     @contextmanager
     def run(self):
+        """Context manager that opens an MLflow run and closes it on exit."""
+
         run = mlflow.start_run(run_name=self.run_name)
         self.current_run_id = run.info.run_id
         mlflow.set_tags(self.run_tags)
@@ -60,12 +69,15 @@ class ExperimentTracker:
         self,
         metrics: dict[str, int | float | None],
     ) -> None:
-        logger.info(f"Logging metrics {metrics}")
+        """Log multiple metrics at once to the current MLflow run."""
+
+        logger.info("Logging metrics %s", metrics)
         mlflow.log_metrics(metrics=metrics)
 
     def log_params(self, params: dict[str, str | int | float | None]) -> None:
-        """Log multiple parameters at once"""
-        logger.info(f"Logging params: {params}")
+        """Log multiple parameters at once to the current MLflow run."""
+
+        logger.info("Logging params: %s", params)
         mlflow.log_params(params)
 
     def log_pyfunc_model(
@@ -76,22 +88,28 @@ class ExperimentTracker:
         X_train: np.ndarray,
         Y_train: np.ndarray,
     ) -> None:
+        """
+        Log a PyFunc model together with its training data as MLflow artifacts.
 
-        logger.info(f"Logging PyFunc model to artifact path: {artifact_path}")
+        The training arrays are saved to a temporary directory as ``.npy``
+        files and attached to the model as artifacts so they can be reloaded
+        later via ``load_context``.
+        """
+        logger.info("Logging PyFunc model to artifact path: %s", artifact_path)
 
         with tempfile.TemporaryDirectory() as tmp_dir:
-            path_X = os.path.join(tmp_dir, "X_train.npy")
-            path_Y = os.path.join(tmp_dir, "Y_train.npy")
+            path_x = os.path.join(tmp_dir, "X_train.npy")
+            path_y = os.path.join(tmp_dir, "Y_train.npy")
 
-            np.save(path_X, X_train)
-            np.save(path_Y, Y_train)
+            np.save(path_x, X_train)
+            np.save(path_y, Y_train)
 
             mlflow.pyfunc.log_model(
                 artifact_path=artifact_path,
                 python_model=pyfunc_model,
                 artifacts={
-                    "X_train": path_X,
-                    "Y_train": path_Y,
+                    "X_train": path_x,
+                    "Y_train": path_y,
                 },
                 registered_model_name=registered_model_name,
             )
@@ -100,6 +118,14 @@ class ExperimentTracker:
 
 
 class UmapStorage(mlflow.pyfunc.PythonModel):
+    """
+    MLflow PyFunc wrapper for a UMAP model.
+
+    Serializes the UMAP transformer together with its training data so that
+    the model can be reloaded and used to transform new points consistently
+    with the original fit.
+    """
+
     def __init__(self, umap_model):
         self.umap_model = umap_model
 
@@ -108,16 +134,16 @@ class UmapStorage(mlflow.pyfunc.PythonModel):
         Load data from MLflow artifacts
         """
 
-        path_X = context.artifacts["X_train"]
-        path_Y = context.artifacts["Y_train"]
+        path_x = context.artifacts["X_train"]
+        path_y = context.artifacts["Y_train"]
 
-        X_train = np.load(path_X)
-        Y_train = np.load(path_Y)
+        X_train = np.load(path_x)
+        Y_train = np.load(path_y)
 
         self.umap_model.X_train_ = X_train
         self.umap_model.Y_train_ = Y_train
 
-    def predict(self, context, model_input):
+    def predict(self, context, model_input, params=None):
         """
         model_input : np.ndarray ou pandas.DataFrame
         """
@@ -127,3 +153,7 @@ class UmapStorage(mlflow.pyfunc.PythonModel):
             X_new = np.array(model_input)
 
         return self.umap_model.transform(X_new)
+
+    def predict_stream(self, context, model_input, params=None):
+        """Streaming prediction is not supported for UMAP models."""
+        raise NotImplementedError("UmapStorage does not support streaming predictions.")

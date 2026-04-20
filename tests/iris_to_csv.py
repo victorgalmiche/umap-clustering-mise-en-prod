@@ -17,10 +17,7 @@ def iris_to_csv(csv_path: str = "tests/iris.csv") -> None:
 
     # 2️⃣ Build a Polars DataFrame
     #   a) Numeric features (float64)
-    df = pl.DataFrame(
-        data=iris.data,
-        schema={name: pl.Float64 for name in iris.feature_names}
-    )
+    df = pl.DataFrame(data=iris.data, schema={name: pl.Float64 for name in iris.feature_names})
 
     #   b) Add the integer target column (not relevant for unsupervised clustering)
     # df = df.with_columns(

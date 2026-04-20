@@ -35,8 +35,8 @@ def make_model(X_train_: np.ndarray = np.array([]), Y_train_: np.ndarray = np.ar
 
 # ── Tests ──────────────────────────────────────────────────────────────────────
 
-class TestInitializeWithBarycenter:
 
+class TestInitializeWithBarycenter:
     def test_weighted_barycenter_is_correct(self):
         """
         GIVEN simple trained embeddings and matrix of weights
@@ -45,14 +45,14 @@ class TestInitializeWithBarycenter:
         THEN  test if the output is the barycenter
         """
         # GIVEN
-        Y_train = np.array([
-            [0.0, 0.0],
-            [2.0, 2.0],
-            [10.0, 10.0]
-        ])
-        weights = sp.csr_matrix(np.array([
-            [1.0, 3.0, 0.0],
-        ]))
+        Y_train = np.array([[0.0, 0.0], [2.0, 2.0], [10.0, 10.0]])
+        weights = sp.csr_matrix(
+            np.array(
+                [
+                    [1.0, 3.0, 0.0],
+                ]
+            )
+        )
         model = make_model(Y_train_=Y_train)
 
         # WHEN
@@ -70,10 +70,12 @@ class TestInitializeWithBarycenter:
         THEN  test the output is the mean of Y_train.
         """
         # GIVEN
-        Y_train = np.array([
-            [1.0, 0.0],
-            [3.0, 0.0],
-        ])
+        Y_train = np.array(
+            [
+                [1.0, 0.0],
+                [3.0, 0.0],
+            ]
+        )
         weights = sp.csr_matrix(np.zeros((1, 2)))
         model = make_model(Y_train_=Y_train)
 
@@ -108,11 +110,11 @@ class TestInitializeWithBarycenter:
         # THEN
         assert Y_new.shape == (m, n_components)
 
+
 # ── TestCrossWeights ───────────────────────────────────────────────────────────
 
 
 class TestCrossWeights:
-
     def test_weights_are_in_zero_one_range(self):
         """
         GIVEN valid indices and distances between 2 new points and a training set of 5 points,
@@ -199,9 +201,7 @@ class TestCrossWeights:
             (1, 2): np.exp(-0.5),
         }
         for (row, col), val in expected.items():
-            np.testing.assert_allclose(
-                W[row, col], val, rtol=1e-6, err_msg=f"incorrect values in W[{row},{col}]"
-            )
+            np.testing.assert_allclose(W[row, col], val, rtol=1e-6, err_msg=f"incorrect values in W[{row},{col}]")
 
         W_dense = W.toarray()
         for r in range(2):
@@ -214,7 +214,6 @@ class TestCrossWeights:
 
 
 class TestTransform:
-
     def test_raises_if_fit_transform_not_called(self):
         """
         GIVEN instantiate umap_mapping without fit_transform,
@@ -247,18 +246,21 @@ class TestTransform:
         # THEN
         assert np.shape(embedding_test) == (np.shape(X_test)[0], model.n_components)
 
+
 # ── TestAttractiveForce ──────────────────────────────────────────────────────────────
 
 
 class TestAttractiveForce:
-
-    @pytest.mark.parametrize("y_i, y_j, weight_ij, expected_sign_dim", [
-        (np.array([2.0, 0.0]),  np.array([0.0, 0.0]),  1.0,  (0, "<")),
-        (np.array([-2.0, 0.0]), np.array([0.0, 0.0]),  1.0,  (0, ">")),
-        (np.array([0.0, 3.0]),  np.array([0.0, 0.0]),  1.0,  (1, "<")),
-        (np.array([0.0, -3.0]), np.array([0.0, 0.0]),  1.0,  (1, ">")),
-        (np.array([2.0, 0.0]),  np.array([0.0, 0.0]),  2.0,  (0, "<")),
-    ])
+    @pytest.mark.parametrize(
+        "y_i, y_j, weight_ij, expected_sign_dim",
+        [
+            (np.array([2.0, 0.0]), np.array([0.0, 0.0]), 1.0, (0, "<")),
+            (np.array([-2.0, 0.0]), np.array([0.0, 0.0]), 1.0, (0, ">")),
+            (np.array([0.0, 3.0]), np.array([0.0, 0.0]), 1.0, (1, "<")),
+            (np.array([0.0, -3.0]), np.array([0.0, 0.0]), 1.0, (1, ">")),
+            (np.array([2.0, 0.0]), np.array([0.0, 0.0]), 2.0, (0, "<")),
+        ],
+    )
     def test_direction_pulls_yi_toward_yj(self, y_i, y_j, weight_ij, expected_sign_dim):
         """
         GIVEN two distinct points y_i and y_j with a positive weight,
@@ -308,7 +310,7 @@ class TestAttractiveForce:
             "different_points_w025_w1",
             "vertical_points_w01_w05",
             "diagonal_points_w1_w2",
-        ]
+        ],
     )
     def test_gradient_scales_with_weight(self, y_i, y_j, w1, w2):
         """
@@ -326,11 +328,11 @@ class TestAttractiveForce:
         # THEN
         np.testing.assert_allclose(grad2, grad1 * (w2 / w1), rtol=1e-6)
 
+
 # ── TestRepulsiveForce ──────────────────────────────────────────────────────────────
 
 
 class TestRepulsiveForce:
-
     @pytest.mark.parametrize(
         "y_i, y_j, expected_direction",
         [
@@ -348,7 +350,7 @@ class TestRepulsiveForce:
             "below_yj",
             "top_right_diagonal",
             "bottom_left_diagonal",
-        ]
+        ],
     )
     def test_direction_pushes_yi_away_from_yj(self, y_i, y_j, expected_direction):
         """
@@ -372,11 +374,9 @@ class TestRepulsiveForce:
         elif expected_direction == "down":
             assert grad[1] < 0.0, f"Expected negative y gradient, got {grad[1]}"
         elif expected_direction == "top-right":
-            assert grad[0] > 0.0 and grad[1] > 0.0, \
-                ValueError(f"Expected positive x and y gradients, got {grad}")
+            assert grad[0] > 0.0 and grad[1] > 0.0, ValueError(f"Expected positive x and y gradients, got {grad}")
         elif expected_direction == "bottom-left":
-            assert grad[0] < 0.0 and grad[1] < 0.0, \
-                ValueError(f"Expected negative x and y gradients, got {grad}")
+            assert grad[0] < 0.0 and grad[1] < 0.0, ValueError(f"Expected negative x and y gradients, got {grad}")
 
     def test_weight_one_gives_zero_gradient(self):
         """
@@ -399,30 +399,15 @@ class TestRepulsiveForce:
         "y_j, positions",
         [
             # Original case: points moving away along x-axis
-            (
-                np.array([0.0, 0.0]),
-                [np.array([0.5, 0.0]), np.array([2.0, 0.0]), np.array([5.0, 0.0])]
-            ),
+            (np.array([0.0, 0.0]), [np.array([0.5, 0.0]), np.array([2.0, 0.0]), np.array([5.0, 0.0])]),
             # Points moving away along y-axis
-            (
-                np.array([0.0, 0.0]),
-                [np.array([0.0, 0.5]), np.array([0.0, 2.0]), np.array([0.0, 5.0])]
-            ),
+            (np.array([0.0, 0.0]), [np.array([0.0, 0.5]), np.array([0.0, 2.0]), np.array([0.0, 5.0])]),
             # Points moving away diagonally
-            (
-                np.array([0.0, 0.0]),
-                [np.array([0.5, 0.5]), np.array([1.5, 1.5]), np.array([3.0, 3.0])]
-            ),
+            (np.array([0.0, 0.0]), [np.array([0.5, 0.5]), np.array([1.5, 1.5]), np.array([3.0, 3.0])]),
             # Different origin point
-            (
-                np.array([1.0, 1.0]),
-                [np.array([1.5, 1.0]), np.array([3.0, 1.0]), np.array([6.0, 1.0])]
-            ),
+            (np.array([1.0, 1.0]), [np.array([1.5, 1.0]), np.array([3.0, 1.0]), np.array([6.0, 1.0])]),
             # Smaller increments
-            (
-                np.array([0.0, 0.0]),
-                [np.array([0.1, 0.0]), np.array([0.5, 0.0]), np.array([1.0, 0.0])]
-            ),
+            (np.array([0.0, 0.0]), [np.array([0.1, 0.0]), np.array([0.5, 0.0]), np.array([1.0, 0.0])]),
         ],
         ids=[
             "x_axis_movement",
@@ -430,7 +415,7 @@ class TestRepulsiveForce:
             "diagonal_movement",
             "offset_origin",
             "small_increments",
-        ]
+        ],
     )
     def test_force_decreases_as_points_move_apart(self, y_j, positions):
         """
@@ -443,22 +428,18 @@ class TestRepulsiveForce:
         model = make_model()
 
         # WHEN
-        norms = [
-            np.linalg.norm(model.repulsive_force(y_i, y_j, weight_ij=0.0))
-            for y_i in positions
-        ]
+        norms = [np.linalg.norm(model.repulsive_force(y_i, y_j, weight_ij=0.0)) for y_i in positions]
 
         # THEN
         assert norms[0] > norms[1] > norms[2], (
-            f"Expected decreasing norms as distance increases, "
-            f"but got {norms[0]:.4f} > {norms[1]:.4f} > {norms[2]:.4f}"
+            f"Expected decreasing norms as distance increases, but got {norms[0]:.4f} > {norms[1]:.4f} > {norms[2]:.4f}"
         )
+
 
 # ── TestFindAbParams ──────────────────────────────────────────────────────────────
 
 
 class TestFindAbParams:
-
     @pytest.mark.parametrize("min_dist", [0.05, 0.1, 0.2, 0.5])
     def test_returns_positive_a_and_b(self, min_dist):
         """
@@ -471,10 +452,7 @@ class TestFindAbParams:
         model = make_model(min_dist=min_dist)
 
         d_vals = np.linspace(0.05, 3.0, 50)
-        D = sp.csr_matrix(
-            (d_vals, (np.arange(50), np.arange(50))),
-            shape=(50, 50)
-        )
+        D = sp.csr_matrix((d_vals, (np.arange(50), np.arange(50))), shape=(50, 50))
 
         # WHEN
         a, b = model.find_ab_params(D)
@@ -493,9 +471,7 @@ class TestFindAbParams:
         model = make_model(min_dist=0.1)
         d_vals = np.linspace(0.05, 3.0, 100)
         psi = np.where(d_vals <= model.min_dist, 1.0, np.exp(-(d_vals - model.min_dist)))
-        D = sp.csr_matrix(
-            (d_vals, (np.arange(100), np.arange(100))), shape=(100, 100)
-        )
+        D = sp.csr_matrix((d_vals, (np.arange(100), np.arange(100))), shape=(100, 100))
 
         # WHEN
         a, b = model.find_ab_params(D)
@@ -505,11 +481,11 @@ class TestFindAbParams:
         rmse = np.sqrt(np.mean((fitted - psi) ** 2))
         assert rmse < 0.05, f"RMSE too high : {rmse:.4f}"
 
+
 # ── TestSpectralEmbedding ──────────────────────────────────────────────────────────────
 
 
 class TestSpectralEmbedding:
-
     def test_output_shape_is_n_samples_by_n_components(self):
         """
         GIVEN a symmetrical weights matrix, valid for 8 points,
@@ -540,10 +516,12 @@ class TestSpectralEmbedding:
         # GIVEN
         model = make_model(n_components=2)
         block = np.ones((4, 4)) - np.eye(4)
-        W_dense = np.block([
-            [block, np.zeros((4, 4))],
-            [np.zeros((4, 4)), block],
-        ])
+        W_dense = np.block(
+            [
+                [block, np.zeros((4, 4))],
+                [np.zeros((4, 4)), block],
+            ]
+        )
         W = sp.csr_matrix(W_dense)
 
         # WHEN
@@ -593,9 +571,8 @@ class TestSpectralEmbedding:
                 np.linalg.norm(Lv),
                 expected_eigenvalue * np.linalg.norm(v),
                 decimal=6,
-                err_msg=f"The column {i} is not in the eigenspace {expected_eigenvalue}"
+                err_msg=f"The column {i} is not in the eigenspace {expected_eigenvalue}",
             )
             np.testing.assert_almost_equal(
-                ones @ Lv, 0.0, decimal=6,
-                err_msg=f"L_sym @ v[:,{i}] must not have any component along the null vector"
+                ones @ Lv, 0.0, decimal=6, err_msg=f"L_sym @ v[:,{i}] must not have any component along the null vector"
             )

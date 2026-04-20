@@ -15,7 +15,7 @@ def run_umap_api(
     knn_metric: str = "euclidean",
     knn_method: str = "approx",
     n_epochs: int = 200,
-    mode: str = "umap"
+    mode: str = "umap",
 ) -> np.ndarray:
     """
     Call the API to run umap.
@@ -27,9 +27,7 @@ def run_umap_api(
 
     csv_buffer = df.to_csv(index=False).encode()
 
-    files = {
-        "file": ("data.csv", csv_buffer, "text/csv")
-    }
+    files = {"file": ("data.csv", csv_buffer, "text/csv")}
 
     data = {
         "n_neighbors": n_neighbors,
@@ -37,7 +35,7 @@ def run_umap_api(
         "min_dist": min_dist,
         "knn_metric": knn_metric,
         "knn_method": knn_method,
-        "x_client_source": "streamlit"
+        "x_client_source": "streamlit",
     }
 
     response = requests.post(url, files=files, data=data)
@@ -53,11 +51,7 @@ def run_umap_api(
         return np.array(data["embedding"]), data["access_key"]
 
 
-def run_umap_transform(
-    df: pd.DataFrame,
-    access_key: str,
-    n_epochs: int
-) -> np.ndarray:
+def run_umap_transform(df: pd.DataFrame, access_key: str, n_epochs: int) -> np.ndarray:
     """
     Call the API to run umap.
     mode: umap or train
@@ -66,15 +60,9 @@ def run_umap_transform(
 
     csv_buffer = df.to_csv(index=False).encode()
 
-    files = {
-        "file": ("data.csv", csv_buffer, "text/csv")
-    }
+    files = {"file": ("data.csv", csv_buffer, "text/csv")}
 
-    data = {
-        "access_key": access_key,
-        "n_epochs": n_epochs,
-        "x_client_source": "streamlit"
-    }
+    data = {"access_key": access_key, "n_epochs": n_epochs, "x_client_source": "streamlit"}
 
     response = requests.post(url, files=files, data=data)
 
