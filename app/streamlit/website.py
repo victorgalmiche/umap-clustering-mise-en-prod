@@ -5,7 +5,7 @@ from modules import exploration, transform
 # --- CONFIGURATION ---
 API_URL = "https://umap-api-mmvs.lab.sspcloud.fr/"
 
-st.set_page_config(page_title="UMAP + Clustering App", layout="wide", menu_items={"About": "Version 0.9.0"})
+st.set_page_config(page_title="UMAP + Clustering App", layout="wide", menu_items={"About": "Version 1.0.0"})
 
 
 # --- API STATUS SIDEBAR ---

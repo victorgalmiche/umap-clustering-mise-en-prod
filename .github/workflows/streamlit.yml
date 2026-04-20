@@ -25,4 +25,4 @@ jobs:
           context: .
           file: ./app/streamlit/Dockerfile
           push: true
-          tags: ${{ secrets.SEB_DOCKERHUB_USERNAME }}/umap-streamlit:v0.9.0
+          tags: ${{ secrets.SEB_DOCKERHUB_USERNAME }}/umap-streamlit:v1.0.0
