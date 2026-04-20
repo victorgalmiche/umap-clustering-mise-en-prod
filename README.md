@@ -1,4 +1,6 @@
 [![PR Tests](https://github.com/victorgalmiche/umap-clustering-mise-en-prod/actions/workflows/tests.yaml/badge.svg)](https://github.com/victorgalmiche/umap-clustering-mise-en-prod/actions/workflows/tests.yaml)
+[![api-ci](https://github.com/victorgalmiche/umap-clustering-mise-en-prod/actions/workflows/api_image.yml/badge.svg)](https://github.com/victorgalmiche/umap-clustering-mise-en-prod/actions/workflows/api_image.yml)
+[![streamlit-ci](https://github.com/victorgalmiche/umap-clustering-mise-en-prod/actions/workflows/streamlit.yml/badge.svg)](https://github.com/victorgalmiche/umap-clustering-mise-en-prod/actions/workflows/streamlit.yml)
 
 # UMAP demonstration platform
 
