@@ -221,7 +221,7 @@ class TestTransform:
         THEN  a RuntimeError should be raised.
         """
         # GIVEN
-        model = make_model()
+        model = umap_mapping()
 
         # WHEN / THEN
         with pytest.raises(RuntimeError, match="fit_transform"):
