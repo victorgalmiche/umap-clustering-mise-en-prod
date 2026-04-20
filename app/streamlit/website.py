@@ -5,11 +5,7 @@ from modules import exploration, transform
 # --- CONFIGURATION ---
 API_URL = "https://umap-api-mmvs.lab.sspcloud.fr/"
 
-st.set_page_config(
-    page_title="UMAP + Clustering App",
-    layout="wide",
-    menu_items={"About": "Version 0.9.0"}
-)
+st.set_page_config(page_title="UMAP + Clustering App", layout="wide", menu_items={"About": "Version 0.9.0"})
 
 
 # --- API STATUS SIDEBAR ---
@@ -42,10 +38,9 @@ st.markdown("""
         and identify natural groupings using UMAP and unsupervised clustering.
     """)
 
-tab_exp, tab_trans = st.tabs([
-    "🔍 Exploration (/umap) and training (/train)",
-    "🚀 Projection (/transform) - Experimental"
-])
+tab_exp, tab_trans = st.tabs(
+    ["🔍 Exploration (/umap) and training (/train)", "🚀 Projection (/transform) - Experimental"]
+)
 
 with tab_exp:
     exploration.render()

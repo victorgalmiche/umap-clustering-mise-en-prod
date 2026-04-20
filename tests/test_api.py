@@ -12,15 +12,10 @@ def test_workflow_complete(start_api):
     Test complete life cycle : Train -> Transform
     """
     # --- 1. TEST /train ---
-    df_train = pd.DataFrame(np.random.rand(50, 4), columns=['a', 'b', 'c', 'd'])
+    df_train = pd.DataFrame(np.random.rand(50, 4), columns=["a", "b", "c", "d"])
     csv_train = df_train.to_csv(index=False).encode()
 
-    train_payload = {
-        "n_neighbors": 10,
-        "n_components": 2,
-        "min_dist": 0.1,
-        "n_epochs": 20
-    }
+    train_payload = {"n_neighbors": 10, "n_components": 2, "min_dist": 0.1, "n_epochs": 20}
 
     files = {"file": ("train.csv", csv_train, "text/csv")}
 
@@ -32,13 +27,10 @@ def test_workflow_complete(start_api):
     access_key = data_train["access_key"]
 
     # --- 2. TEST /transform ---
-    df_new = pd.DataFrame(np.random.rand(10, 4), columns=['a', 'b', 'c', 'd'])
+    df_new = pd.DataFrame(np.random.rand(10, 4), columns=["a", "b", "c", "d"])
     csv_new = df_new.to_csv(index=False).encode()
 
-    transform_payload = {
-        "access_key": access_key,
-        "n_epochs": 10
-    }
+    transform_payload = {"access_key": access_key, "n_epochs": 10}
 
     files_new = {"file": ("new.csv", csv_new, "text/csv")}
 

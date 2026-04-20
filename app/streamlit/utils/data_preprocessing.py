@@ -6,7 +6,7 @@ DATASET_OPTIONS = {
     "Digits (Images of handwritten digits)": load_digits,
     "Iris (Flower specifications)": load_iris,
     "Wine (specifications)": load_wine,
-    "Breast Cancer (specifications)": load_breast_cancer
+    "Breast Cancer (specifications)": load_breast_cancer,
 }
 
 
@@ -24,11 +24,7 @@ def load_and_sample(df):
 
 
 def fetch_data_source():
-    return st.sidebar.radio(
-        "Data Selection",
-        ["Standard Datasets", "Upload CSV"],
-        on_change=reset_state
-    )
+    return st.sidebar.radio("Data Selection", ["Standard Datasets", "Upload CSV"], on_change=reset_state)
 
 
 def fetch_csv_file(data_file, suffix_key):
@@ -47,7 +43,7 @@ def fetch_csv_file(data_file, suffix_key):
             "Select the target column",
             options=[None] + list(data_to_embed.columns),
             help="This column will be ignored by UMAP but used for visualization.",
-            key="target_column" + suffix_key
+            key="target_column" + suffix_key,
         )
     else:
         st.sidebar.warning("Waiting for file...")
@@ -57,11 +53,7 @@ def fetch_csv_file(data_file, suffix_key):
 
 
 def fetch_default_data():
-    selected_name = st.sidebar.selectbox(
-        "Chose a dataset",
-        list(DATASET_OPTIONS.keys()),
-        on_change=reset_state
-    )
+    selected_name = st.sidebar.selectbox("Chose a dataset", list(DATASET_OPTIONS.keys()), on_change=reset_state)
     loader = DATASET_OPTIONS[selected_name]
     data = loader(as_frame=True)
 

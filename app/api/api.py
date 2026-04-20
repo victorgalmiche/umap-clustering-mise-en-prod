@@ -37,8 +37,10 @@ model_cache = {}
 # API Metadata for Swagger UI (/docs)
 tags_metadata = [
     {"name": "General", "description": "System health and welcome information."},
-    {"name": "Model Management",
-     "description": "Training and projection operations using secure access keys (experimental)."},
+    {
+        "name": "Model Management",
+        "description": "Training and projection operations using secure access keys (experimental).",
+    },
     {"name": "Production", "description": "One-shot UMAP projections without persistence."},
 ]
 
@@ -57,7 +59,7 @@ app = FastAPI(
     Service is not guaranteed.
     """,
     version="0.9.0",
-    openapi_tags=tags_metadata
+    openapi_tags=tags_metadata,
 )
 
 # Initialize monitoring
@@ -242,7 +244,7 @@ async def transform_data(
     tracker = ExperimentTracker(
         experiment_name=get_experiment_path("umap-transform", x_client_source),
         run_name="transform-execution",
-        run_tags={"env": os.getenv("APP_ENV", "dev")}
+        run_tags={"env": os.getenv("APP_ENV", "dev")},
     )
 
     transform_error: Optional[Exception] = None
@@ -278,11 +280,7 @@ async def transform_data(
     }
 
 
-@app.post(
-    "/umap",
-    summary="One-shot UMAP projection",
-    tags=["Production"]
-)
+@app.post("/umap", summary="One-shot UMAP projection", tags=["Production"])
 async def apply_umap(
     file: UploadFile = File(...),
     params: UmapParameters = Depends(umap_parameters),
@@ -337,7 +335,9 @@ async def apply_umap(
         tracker.log_params(umap_params)
 
         model, scaler, dataset_standardized, dataset_transformed = fit_umap_model(
-            df, umap_params, tracker,
+            df,
+            umap_params,
+            tracker,
         )
 
     return {"embedding": dataset_transformed.tolist()}
