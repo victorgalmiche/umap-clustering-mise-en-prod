@@ -32,6 +32,16 @@ dev = [
     "pytest>=9.0.2",
 ]
 
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.basic]
+good-names = ["X_train", "Y_train", "X_train_", "Y_train_", "X_new"]
+
+[tool.pylint.design]
+max-args = 8
+max-positional-arguments = 8
+
 [tool.ruff]
 line-length = 120
 exclude = ["notebooks/"]
