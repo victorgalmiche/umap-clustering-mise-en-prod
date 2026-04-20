@@ -1,6 +1,8 @@
 """Algorithme basé sur le papier Dong, W., Moses, C., & Li, K. (2011, March).
 Efficient k-nearest neighbor graph construction for generic similarity measures.
-In Proceedings of the 20th international conference on World wide web (pp. 577-586)."""
+In Proceedings of the 20th international conference on World wide web (pp. 577-586).
+Keeping the name of variables disregarding pylint recommendations.
+"""
 
 import heapq
 
@@ -11,7 +13,7 @@ from scipy.spatial.distance import pdist, squareform
 def approx_knn_all_points(X: np.ndarray, k: int, metric: str = "euclidean") -> tuple[np.ndarray, np.ndarray]:
     """
     Calcule les k plus proches voisins approximés pour tous les points du dataset.
-    S'appuie sur l'algorithme NNDescent.
+    S'appuie sur l'algorithme nn_descent.
 
     Parameters
     ----------
@@ -33,10 +35,10 @@ def approx_knn_all_points(X: np.ndarray, k: int, metric: str = "euclidean") -> t
     distance_matrix = squareform(pdist(X, metric=metric))
     sigma = -distance_matrix
 
-    return NNDescent(X, sigma, k)
+    return nn_descent(X, sigma, k)
 
 
-def NNDescent(V: np.ndarray, sigma: np.ndarray, K: int, max_iter: int = 1000) -> tuple[np.ndarray, np.ndarray]:
+def nn_descent(V: np.ndarray, sigma: np.ndarray, K: int, max_iter: int = 1000) -> tuple[np.ndarray, np.ndarray]:  # pylint: disable=too-many-locals,too-many-branches
     """Algorithme 1 de l'article
     Inputs:
         V: ndarray (N, d), the dataset
@@ -46,7 +48,7 @@ def NNDescent(V: np.ndarray, sigma: np.ndarray, K: int, max_iter: int = 1000) ->
         indices: liste des + proches voisins pour chacun des points du dataset
         distances: liste des distances associées
     """
-    N, dim = np.shape(V)
+    N, _ = np.shape(V)
     B = [[] for _ in range(N)]
     for v in range(N):
         samples = np.random.choice([u for u in range(N) if u != v], K, replace=False)
@@ -88,6 +90,10 @@ def NNDescent(V: np.ndarray, sigma: np.ndarray, K: int, max_iter: int = 1000) ->
 
 
 def reverse(B: list[list[tuple[float, int]]]) -> list[list[tuple[float, int]]]:
+    """
+    Compute the reverse k-NN graph: for each node, list the points
+    that have it as one of their k nearest neighbors.
+    """
     N = len(B)
     R = [[] for _ in range(N)]
     for u in range(N):
@@ -97,6 +103,12 @@ def reverse(B: list[list[tuple[float, int]]]) -> list[list[tuple[float, int]]]:
 
 
 def update_nn(H: list[tuple[float, int]], x: tuple[float, int]) -> int:
+    """
+    Try to insert a candidate neighbor ``x = (similarity, index)`` into
+    the max-size-K min-heap ``H``. Returns 1 if the heap was updated,
+    0 otherwise (duplicate or similarity too low).
+    """
+
     w, u = x
 
     # Si u est déjà dans le tas

@@ -37,7 +37,7 @@ The initial class is the result of a joint effort :
 
 - **Matéo M.** (`@matheomorin`) — original author of the `umap_mapping` class.
 
-- **Victor Galmiche** (`@victorgalmiche`) — hand-rolled NNDescent implementation (`nn_descent.py`) used as the approximate KNN backend, based on [[2]](#references).
+- **Victor Galmiche** (`@victorgalmiche`) — hand-rolled nn_descent implementation (`nn_descent.py`) used as the approximate KNN backend, based on [[2]](#references).
 
 - **Paco** — validation of the pipeline on a wide range of datasets, combining UMAP with HDBSCAN - KMeans clustering and producing the 2D visualisations that confirmed the behaviour of the embeddings and performed comparative analysis with t-SNE and PCA. We removed this part as it is not part of the production release.
 
@@ -78,7 +78,7 @@ The class follows the five canonical stages of UMAP, exposed through `fit_transf
 The user chooses between two backends through the `KNN_method` parameter:
 
 - `"exact"` → `exact_knn_all_points` (KDTree from `sklearn.neighbors`), suited to low- to mid-dimensional inputs.
-- `"approx"` → `approx_knn_all_points`, Victor's NNDescent implementation, much faster in high dimensions at the cost of approximate neighbours.
+- `"approx"` → `approx_knn_all_points`, Victor's nn_descent implementation, much faster in high dimensions at the cost of approximate neighbours.
 
 Neighbours and distances are packed into a `scipy.sparse.csr_matrix` to keep memory usage low — only the `k` non-zero entries per row are stored.
 
