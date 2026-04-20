@@ -35,9 +35,7 @@ def render() -> None:
         "💡 **Requirement:** Your CSV must contain the same numerical features (columns and column names) as your training data."
     )
 
-    new_data_file = st.file_uploader(
-        "Select CSV file", type=["csv"], help="Upload the new data points you wish to project."
-    )
+    new_data_file = data_utils.fetch_data_transform()
 
     if new_data_file is not None:
         df_new, new_target_column = data_utils.fetch_csv_file(new_data_file, suffix_key="_transform")

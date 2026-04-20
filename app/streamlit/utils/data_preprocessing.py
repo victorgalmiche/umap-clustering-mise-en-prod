@@ -16,6 +16,10 @@ def reset_state():
         del st.session_state["embedding"]
     if "labels" in st.session_state:
         del st.session_state["labels"]
+    if "new_embedding" in st.session_state:
+        del st.session_state["new_embedding"]
+    if "new_labels" in st.session_state:
+        del st.session_state["new_labels"]
 
 
 @st.cache_data
@@ -25,7 +29,20 @@ def load_and_sample(df):
 
 
 def fetch_data_source():
-    return st.sidebar.radio("Data Selection", ["Standard Datasets", "Upload CSV"], on_change=reset_state)
+    return st.sidebar.radio(
+        "Data Selection (for training)",
+        ["Standard Datasets", "Upload CSV"],
+        on_change=reset_state
+    )
+
+
+def fetch_data_transform():
+    return st.file_uploader(
+        "Select CSV file for transform",
+        type=["csv"],
+        help="Upload the new data points you wish to project.",
+        on_change=reset_state
+    )
 
 
 def fetch_csv_file(
@@ -52,11 +69,10 @@ def fetch_csv_file(
             help="This column will be ignored by UMAP but used for visualization.",
             key="target_column" + suffix_key,
         )
+        return data_to_embed, target_column
     else:
         st.sidebar.warning("Waiting for file...")
-        st.stop()
-
-    return data_to_embed, target_column
+        return None, None
 
 
 def fetch_default_data():
