@@ -1,5 +1,6 @@
 from sklearn.datasets import load_iris, load_digits, load_wine, load_breast_cancer
 import streamlit as st
+from streamlit.runtime.uploaded_file_manager import UploadedFile
 import pandas as pd
 
 DATASET_OPTIONS = {
@@ -31,7 +32,12 @@ def fetch_data_source():
     )
 
 
-def fetch_csv_file(data_file, suffix_key):
+def fetch_csv_file(
+    data_file: UploadedFile | None, suffix_key: str,
+) -> tuple[pd.DataFrame, str | None]:
+
+    if not suffix_key:
+        raise ValueError("key_suffix is required to avoid duplicate Streamlit element keys.")
     if data_file is not None:
         raw_df = pd.read_csv(data_file)
 

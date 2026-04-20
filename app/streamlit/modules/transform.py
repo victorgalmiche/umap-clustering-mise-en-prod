@@ -8,7 +8,7 @@ import app.streamlit.utils.hyperparameters as param_utils
 import app.streamlit.utils.visualization as plot_utils
 
 
-def render():
+def render()->None:
     """
     Render the UI for the /transform endpoint (Model Inference).
     """
@@ -40,7 +40,7 @@ def render():
     )
 
     if new_data_file is not None:
-        df_new, new_target_column = data_utils.fetch_csv_file(new_data_file, suffix_key="_explore")
+        df_new, new_target_column = data_utils.fetch_csv_file(new_data_file, suffix_key="_transform")
         with st.expander("Preview new data"):
             st.dataframe(df_new.head())
     else:
