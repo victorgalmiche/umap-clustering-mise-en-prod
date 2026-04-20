@@ -140,7 +140,7 @@ def render() -> None:
             st.metric(
                 label="Cluster Quality (Silhouette Score)",
                 value=f"{sil_score:.4f}",
-                help="Measures how similar an object is to its own cluster compared to other clusters.",
+                help="How well clusters are separated (higher is better, max=1)",
             )
 
         plot_utils.show_clusters(embedding=new_emb, labels=new_labels)

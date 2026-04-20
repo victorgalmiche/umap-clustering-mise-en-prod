@@ -110,7 +110,7 @@ def render():
             st.metric(
                 label="Trustworthiness Score",
                 value=f"{trust:.4f}",
-                help="Measures to what extent the local structure is retained.",
+                help="How well local structure is preserved after dimensionality reduction (higher is better, max=1)",
             )
 
         with col2:
@@ -162,7 +162,7 @@ def render():
                 st.metric(
                     label="Silhouette Score",
                     value=f"{sil_score:.4f}",
-                    help="Closer to 1 means clusters are well-separated.",
+                    help="How well clusters are separated (higher is better, max=1)",
                 )
             else:
                 st.warning("Only one cluster has been found, try again using other parameters")
