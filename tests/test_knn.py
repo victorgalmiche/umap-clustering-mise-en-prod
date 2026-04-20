@@ -8,12 +8,12 @@ class TestExactKnnAllPoints:
     """Test suite for exact_knn_all_points function."""
 
     @pytest.mark.parametrize(
-        "point_idx, expected_indices, expected_distances", 
+        "point_idx, expected_indices, expected_distances",
         [
             (0, [1, 2], [1.0, 2.0]),
             (2, [1, 3], [1.0, 1.0]),  # distances will be sorted for comparison
-            (4, [3, 2], [1.0, 2.0])
-        ]
+            (4, [3, 2], [1.0, 2.0]),
+        ],
     )
     def test_exact_neighbors_and_distance(self, point_idx, expected_indices, expected_distances):
         """
@@ -42,7 +42,7 @@ class TestExactKnnAllPoints:
         GIVEN Query a single point against a known training set and verify
             both indices and distances are pixel-perfect.
         WHEN call exact_knn_all_points
-        THEN 
+        THEN
             Training set: (0,0), (1,0), (3,3)
             Query point : (0.1, 0.1)  → closest are idx 0 (d≈0.141), idx 1 (d≈0.9)
         """
@@ -53,11 +53,11 @@ class TestExactKnnAllPoints:
         # WHEN
         indices, distances = exact_knn_all_points(X_query, k=2, X_train=X_train)
 
-        # THEN 
+        # THEN
         expected_indices = [np.int64(0), np.int64(1)]
         expected_distances = [
-            np.sqrt(0.1**2 + 0.1**2),        
-            np.sqrt(0.9**2 + 0.1**2),         
+            np.sqrt(0.1**2 + 0.1**2),
+            np.sqrt(0.9**2 + 0.1**2),
         ]
         assert list(indices[0]) == expected_indices
         np.testing.assert_allclose(distances[0], expected_distances, atol=1e-6)
@@ -120,7 +120,7 @@ class TestExactKnnAllPoints:
 
     def test_k_clipped_to_train_size(self):
         """
-        GIVEN k > len(X_train), 
+        GIVEN k > len(X_train),
         WHEN call exact_knn_all_points
         THEN k must be silently clipped.
         """

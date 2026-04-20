@@ -1,4 +1,5 @@
 """k-nearest neighbors computation using KDTree."""
+
 import numpy as np
 from sklearn.neighbors import KDTree
 
@@ -31,7 +32,7 @@ def exact_knn_all_points(
         k = min(k, X_train.shape[0])
         distances, indices = tree.query(X, k=k)
         return indices, distances
-        
+
     tree = KDTree(X, metric=metric)
     # k+1 car le point lui-même est retourné
     distances, indices = tree.query(X, k=k + 1)

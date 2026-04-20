@@ -1,4 +1,5 @@
-""" UMAP class """
+"""UMAP class"""
+
 # Data Structure
 from collections.abc import Generator
 
@@ -15,7 +16,8 @@ from .nn_descent import approx_knn_all_points
 
 
 class umap_mapping:
-    """ UMAP class """
+    """UMAP class"""
+
     def __init__(
         self,
         n_neighbors: int = 15,
@@ -151,7 +153,7 @@ class umap_mapping:
     def repulsive_force(
         self, y_i: np.ndarray, y_j: np.ndarray, weight_ij: float, epsilon: float = 1e-3
     ) -> np.ndarray:  # See Part 3.2 https://arxiv.org/pdf/1802.03426
-        """ Repulsive Froe computation """
+        """Repulsive Froe computation"""
         return (
             (2 * self.b)
             / ((epsilon + np.linalg.norm(y_i - y_j) ** 2) * (1 + self.a * np.linalg.norm(y_i - y_j) ** (2 * self.b)))
@@ -177,7 +179,7 @@ class umap_mapping:
         """
 
         def curve(d: np.ndarray, a: float, b: float) -> np.ndarray:
-            """ curve function """
+            """curve function"""
             return 1 / (1 + a * d ** (2 * b))
 
         d = distance_matrix.data.astype(np.float64)
@@ -197,9 +199,9 @@ class umap_mapping:
 
         L = d_inv_sqrt.dot(D - weights).dot(d_inv_sqrt)
 
-        _ , eigvecs = sp.linalg.eigsh(L, k=self.n_components + 1, which="SM")
+        _, eigvecs = sp.linalg.eigsh(L, k=self.n_components + 1, which="SM")
 
-        return eigvecs[:, 1: self.n_components + 1]
+        return eigvecs[:, 1 : self.n_components + 1]
 
     def optimize(
         self,

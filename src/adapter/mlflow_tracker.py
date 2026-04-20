@@ -1,4 +1,5 @@
-""" Module for Managing Mlflow """
+"""Module for Managing Mlflow"""
+
 import logging
 import os
 import tempfile
@@ -20,6 +21,7 @@ class ExperimentTracker:
     """
     MLflow wrapper for experiment tracking.
     """
+
     def __init__(
         self, experiment_name: str, run_name: str | None = None, run_tags: dict[str, str] | None = None
     ) -> None:
@@ -123,6 +125,7 @@ class UmapStorage(mlflow.pyfunc.PythonModel):
     the model can be reloaded and used to transform new points consistently
     with the original fit.
     """
+
     def __init__(self, umap_model):
         self.umap_model = umap_model
 
