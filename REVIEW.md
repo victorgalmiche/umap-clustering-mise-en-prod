@@ -12,7 +12,7 @@ Le fichier `README` fait une très bonne explication du sujet du projet, de fonc
 Le fichier contient également des instructions séparées pour un utilisateur de l'API/du site et pour un développeur qui voudrait tester l'API de manière locale. Cette séparation est très claire et permet à tous les lecteurs de sélectionner rapidement les informations qui les concernent pour utiliser rapidement le travail réalisé. Le `README` évoque également la présence de fichiers `.md` dans un dossier `docs` permettant à tous les lecteurs d'avoir accès à des explications complètes des différentes implémentations du projet. Il présente également la structure du code. Finalement, des références sont évoqués permettant aux lecteurs de connaître les sources du projet. 
 
 Ce fichier `README` est très complet et permet de comprendre très rapidement ce que contient le repot Github et comment utiliser les différentes implémentations. Pour améliorer le projet, je pense qu'il serait possible de citer dans le `README` un exemple de base de données auquel UMAP peut être appliqué et ce que ça change afin que le lecteur comprenne rapidement à quoi peut servir l'algorithme dans un besoin métier. De plus, je pense que la structure du code peut être présenté de manière un peu plus visuelle : 
-
+```bash 
 umap-clustering-mise-en-prod/
 ├── src/                #Code source
 │   ├── adapter/
@@ -24,6 +24,7 @@ umap-clustering-mise-en-prod/
 │       └── umap_class.py
 ├── .gitignore          # Fichiers à exclure
 └── README.md           # Présentation du projet
+```
 
 ## Fichier License 
 
