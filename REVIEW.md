@@ -44,25 +44,25 @@ Si on effectue des tests avec Pylint, on a des scores proches de 10 pour le doss
 
 Certains commentaires et certaines docstrings sont en français tandis que le reste du projet est en anglais. Voici des permalinks vers ces commentaires et docstrings en français : 
 
-< https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/src/umap_algo/nn_descent.py#L114>
+https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/src/umap_algo/nn_descent.py#L114
 
-< https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/src/umap_algo/nn_descent.py#L119>
+https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/src/umap_algo/nn_descent.py#L119
 
-< https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/src/umap_algo/nn_descent.py#L73>
+https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/src/umap_algo/nn_descent.py#L73
 
-< https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/src/umap_algo/nn_descent.py#L42>
+https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/src/umap_algo/nn_descent.py#L42
 
-< https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/src/umap_algo/nn_descent.py#L15>
+https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/src/umap_algo/nn_descent.py#L15
 
-< https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/src/umap_algo/nn_descent.py#L1>
+https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/src/umap_algo/nn_descent.py#L1
 
-< https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/src/umap_algo/knn.py#L37>
+https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/src/umap_algo/knn.py#L37
 
-< https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/src/umap_algo/knn.py#L39>
+https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/src/umap_algo/knn.py#L39
 
-< https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/tests/test_api.py#L65>
+https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/tests/test_api.py#L65
 
-< https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/tests/test_knn.py#L8>
+https://github.com/RebeccaBle/fork-umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9212b54f2600ef995950602eabe4a/tests/test_knn.py#L8
 
 Pour améliorer le projet, changer ces commentaires et les mettre tous en anglais permettrait de garder une seule langue sur tout le projet. 
 
