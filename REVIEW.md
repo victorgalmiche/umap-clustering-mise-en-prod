@@ -1,5 +1,11 @@
 # Review de code du projet: "umap-clustering-mise-en-prod" 
 
+
+## Avant-propos :
+
+Dans cette revue de code, je vais passer en revue l'application des bonnes pratiques du développement et proposer des pistes d'améliorations sur les différents points. Cependant, je tiens tout d'abord à dire que votre travail est de grande qualité et que les pistes d'améliorations ne sont que mineurs. L'ensemble du travail est très cohérent, complet et documenté ce qui permet de prendre en main le dépôt très rapidement. 
+
+
 ## Utilisation de Git :
 
 Le projet possède bien un `.gitignore` adapté au langage et avec des règles additionnelles afin de respecter les bonnes pratiques de versioning. Il y a notamment bien une section "Environments" qui permet d'éviter d'avoir les fichiers `.venv` sur Github. De plus, le document avec les token secrets est bien ajouté au `.gitignore` ce qui permet de bien conserver le secret sur les token. Cependant, dans le dossier `tests`, il y a un document `iris.csv` qui pourrait être ajouté dans le `.gitignore` afin d'améliorer le projet et de ne pas conserver de csv sur GitHub. 
@@ -28,13 +34,16 @@ umap-clustering-mise-en-prod/
 ```
 Finalement, je pense que le projet pourrait être améliorer en ajoutant dans le `README` une explication rapide de k-means and HDBSCAN puisque ces deux algorithmes sont utilisés dans le projet et qu'étant donnés que le `README` explique en quoi consiste UMAP, on peut considérer que l'utilisateur de ce dépot n'a pas forcément connaissance du fonctionnement de ces deux algorithmes. 
 
+
 ## Fichier License 
 
 Le projet possède bien un fichier License qui déclare la license d'exploitation du projet. 
 
+
 ## Versioning des packages
 
 Le projet possède un fichier `pyproject.toml` qui permet bien d'installer les packages nécessaires. 
+
 
 ## Qualité du code 
 
@@ -87,12 +96,19 @@ https://github.com/victorgalmiche/umap-clustering-mise-en-prod/blob/7ee6c5fbfaa9
 
 Pour améliorer le projet, changer ces commentaires et les mettre tous en anglais permettrait de garder une seule langue sur tout le projet. 
 
+
 ## Structure des projets
 Le projet possède bien une structure de type cookiecutter. Cependant, en regardant le projet sans le connaître il est difficile de savoir rapidement quel fichier est le "main". Pour améliorer le projet il serait possible de mettre un fichier `main` ou `train` dans le dossier principal afin d'avoir rapidement accès au code principal (je pense que celui-ci correspond à umap_class.py qui est dans le dossier src/umap_algo).
 
-## Streamlit 
+
+## Autres points que les bonnes pratiques du développement 
+
+### Streamlit
+
 Le streamlit est très complet tout en étant pas trop lourd car il compile rapidement. Il permet à l'utilisateur de se représenter rapidement comment fonctionne UMAP et se hyperparamètres. Je pense que pour le améliorer le projet il serait possible de changer les noms des paramètres dans la barre de gauche ou bien d'ajouter une explication rapide sous chaque hyperparamètre car si l'utilisateur ne connait pas les hyperparamètres de UMAP, il ne sait pas forcément ce qu'il fait varier en changeant les hyperparamètres. Par exemple, il serait possible de remplacer "n_components" par "dimension de l'espace d'arrivé", ou bien de l'écrire en dessous. 
+ 
+
 
 ## Conclusion 
 
-Pour résumé, le projet respecte très bien les bonnes pratiques du développement. Le `README` est très complet et il y a même d'autres documents explicatifs dans le code. Pour améliorer le projet, il est possible d'uniformiser la langue des commentaires, de rajouter des docstrings dans les documents du dossier `tests`, de rajouter quelques explications de knn et HDBSCAN et de modifier la présentation de la structure du code dans le `README`, de rajouter des explications des hyperparamètres de UMAP dans le streamlit et finalement d'ajouter le document `iris.csv` du dossier `tests` dans le `.gitignore`. 
+Pour résumé, le projet respecte très bien les bonnes pratiques du développement. Le projet est très complet et d'une très grande qualité. Le `README` est très complet et il y a même d'autres documents explicatifs dans le code. Pour améliorer le projet, il est possible d'uniformiser la langue des commentaires, de rajouter des docstrings dans les documents du dossier `tests`, de rajouter quelques explications de knn et HDBSCAN et de modifier la présentation de la structure du code dans le `README`, de rajouter des explications des hyperparamètres de UMAP dans le streamlit et finalement d'ajouter le document `iris.csv` du dossier `tests` dans le `.gitignore`. Tout ces points d'améliorations ne sont cependant que mineurs face à la qualité du projet. 
