@@ -106,6 +106,10 @@ Le projet possède bien une structure de type cookiecutter. Cependant, en regard
 ### Streamlit
 
 Le streamlit est très complet tout en n'étant pas trop lourd car il compile rapidement. Il permet à l'utilisateur de se représenter rapidement comment fonctionne UMAP et ses hyperparamètres. Je pense que pour le améliorer le projet il serait possible de changer les noms des paramètres dans la barre de gauche ou bien d'ajouter une explication rapide sous chaque hyperparamètre car si l'utilisateur ne connait pas les hyperparamètres de UMAP, il ne sait pas forcément ce qu'il fait varier en changeant les hyperparamètres. Par exemple, il serait possible de remplacer "n_components" par "dimension de l'espace d'arrivé", ou bien de l'écrire en dessous. 
+
+### Mise en production
+
+Le projet a aussi une partie mise en production. Cette partie respecte bien les bonnes pratiques du développement puisque les fichiers utilisés sont rangés dans des dossiers adaptés et sont écrits et formatés comme le cours le suggère. Le projet implémente à la fois une API et un site, il y a donc deux Dockerfile rangés dans des dossiers adaptés. L'organisation des dossiers permet de comprendre rapidement comment la mise en production a été réalisée. Finalement, les deux implémentations fonctionnent et sont utiles. 
  
 
 
